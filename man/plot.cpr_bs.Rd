@@ -4,8 +4,7 @@
 \alias{plot.cpr_bs}
 \title{Plot B-splines}
 \usage{
-\method{plot}{cpr_bs}(x, ..., show_xi = TRUE, show_x = FALSE,
-  color = TRUE, digits = 2, n = 100)
+\method{plot}{cpr_bs}(x, ..., show_xi = TRUE, show_x = FALSE, color = TRUE, digits = 2, n = 100)
 }
 \arguments{
 \item{x}{a \code{cpr_bs} object}
@@ -33,6 +32,8 @@ plot(bmat, show_xi = TRUE,  show_x = TRUE)
 plot(bmat, show_xi = FALSE, show_x = TRUE)
 plot(bmat, show_xi = TRUE,  show_x = FALSE)  ## Default
 plot(bmat, show_xi = FALSE, show_x = FALSE)
+plot(bmat, show_xi = FALSE, show_x = FALSE)
+plot(bmat, show_xi = FALSE, show_x = FALSE, color = FALSE)
 }
 \seealso{
 \code{\link{bsplines}}

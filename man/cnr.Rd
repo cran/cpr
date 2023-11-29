@@ -5,8 +5,15 @@
 \alias{summary.cpr_cnr}
 \title{Control Net Reduction}
 \usage{
-cnr(x, keep = -1, p = 2, margin, n_polycoef = 20L,
-  progress = interactive(), ...)
+cnr(
+  x,
+  keep = -1,
+  p = 2,
+  margin,
+  n_polycoef = 20L,
+  progress = interactive(),
+  ...
+)
 
 \method{summary}{cpr_cnr}(object, ...)
 }
@@ -48,7 +55,4 @@ limit on the number of stored regression fits is to keep memory usage down.
 \seealso{
 \code{\link{influence_weights}}, \code{\link{cpr}} for the
 uni-variable version, Control Polygon Reduction.
-}
-\author{
-Peter DeWitt \email{dewittpe@gmail.com}
 }

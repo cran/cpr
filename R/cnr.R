@@ -2,7 +2,7 @@
 #'
 #' Run the Control Net Reduction Algorithm.
 #'
-#' \code{cnr} runs the control net reduction algorithm.  
+#' \code{cnr} runs the control net reduction algorithm.
 #'
 #' \code{keep} will keep the regression fit as part of the \code{cnr\_cp} object
 #' for models with up to and including keep fits.  For example, if \code{keep =
@@ -11,8 +11,6 @@
 #' \ldots, \code{keep} internal knots) \code{cnr\_cp} objects in the list.  The
 #' limit on the number of stored regression fits is to keep memory usage down.
 #'
-#' @author Peter DeWitt \email{dewittpe@gmail.com}
-#;
 #' @param x a \code{cnr_cp} or \code{cnr_tensor} object
 #' @param keep keep (store) the regression fit for the first \code{keep}
 #' \code{cpr_cn} objects in the list returned by \code{cnr}.
@@ -28,14 +26,14 @@
 #'
 #' @seealso \code{\link{influence_weights}}, \code{\link{cpr}} for the
 #' uni-variable version, Control Polygon Reduction.
-#' 
+#'
 #' @export
-cnr <- function(x, keep = -1, p = 2, margin, n_polycoef = 20L, progress = interactive(), ...) { 
+cnr <- function(x, keep = -1, p = 2, margin, n_polycoef = 20L, progress = interactive(), ...) {
   UseMethod("cnr")
 }
 
 #' @export
-cnr.cpr_cn <- function(x, keep = -1, p = 2, margin = seq_along(x$bspline_list), n_polycoef = 20L, progress = interactive(), ...) { 
+cnr.cpr_cn <- function(x, keep = -1, p = 2, margin = seq_along(x$bspline_list), n_polycoef = 20L, progress = interactive(), ...) {
 
   out <- vector("list", length = sum(sapply(lapply(x$bspline_list[margin], attr, which = "iknots"), length)) + 1L)
 
@@ -45,21 +43,29 @@ cnr.cpr_cn <- function(x, keep = -1, p = 2, margin = seq_along(x$bspline_list), 
     x <- eval(stats::update(x, keep_fit = TRUE, check_rank = FALSE, evaluate = FALSE), parent.frame())
   }
 
-  if (progress) { 
+  if (progress) {
     pb <- utils::txtProgressBar(max = length(out), style = 3)
     prg <- 0
     utils::setTxtProgressBar(pb, prg)
   }
 
   for(i in rev(seq_along(out)[-1])) {
-    out[[i]] <- x 
-    w <- influence_weights(x, p = p, margin, n_polycoef) 
-    w <- dplyr::bind_rows(w, .id = "margin") 
-    w <- dplyr::filter_(w, ~ rank(`max(w)`, ties.method = "first") > 1)
+    out[[i]] <- x
+    w <- influence_weights(x, p = p, margin, n_polycoef)
+    for(i in seq_along(w)) {
+      if (nrow(w[[i]]) > 0L) {
+        w[[i]]$margin <- i
+      }
+    }
+    w <- do.call(rbind, w)
 
-    nkts <- lapply(split(w, factor(w$margin, levels = seq_along(x$bspline_list))), function(xx) xx$iknots)
+    w <- subset(w, rank(w[["max_w"]], ties.method = "first") > 1)
 
-    if (i == keep + 1) { 
+    nkts <- split(w, factor(w$margin, levels = seq_along(x$bspline_list)))
+
+    nkts <- lapply(nkts, function(xx) xx$iknots)
+
+    if (i == keep + 1) {
       x <- stats::update(x, keep_fit = TRUE)
     }
 
@@ -75,15 +81,15 @@ cnr.cpr_cn <- function(x, keep = -1, p = 2, margin = seq_along(x$bspline_list), 
   if (progress) {
     utils::setTxtProgressBar(pb, prg <- prg + 1)
     close(pb)
-  } 
+  }
 
   class(out) <- c("cpr_cnr", class(out))
-  out 
+  out
 }
 
 #' @method print cpr_cnr
 #' @export
-print.cpr_cnr <- function(x, ...) { 
+print.cpr_cnr <- function(x, ...) {
   cat("A list of control nets\n")
   utils::str(x, max.level = 0)
 }
@@ -92,10 +98,10 @@ print.cpr_cnr <- function(x, ...) {
 #' @param object a \code{cpr_cnr} object
 #' @rdname cnr
 summary.cpr_cnr <- function(object, ...) {
-  object %>%
-  lapply(summary) %>%
-  dplyr::bind_rows(.id = 'index') %>%
-  dplyr::mutate_(index = ~ as.integer(index)) %>%
-  dplyr::tbl_df()
+  rtn <- lapply(object, summary)
+  for (i in seq_along(rtn)) {
+    rtn[[i]]$index <- as.integer(i)
+  }
+  do.call(rbind, rtn)
 }
 

@@ -6,9 +6,14 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // refine_ordinate
 arma::vec refine_ordinate(double x, const arma::vec& xi, const arma::vec& theta, unsigned int order);
-RcppExport SEXP cpr_refine_ordinate(SEXP xSEXP, SEXP xiSEXP, SEXP thetaSEXP, SEXP orderSEXP) {
+RcppExport SEXP _cpr_refine_ordinate(SEXP xSEXP, SEXP xiSEXP, SEXP thetaSEXP, SEXP orderSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -22,7 +27,7 @@ END_RCPP
 }
 // coarsen_ordinate
 arma::vec coarsen_ordinate(double x, const arma::vec& xi, const arma::vec& theta, unsigned int order);
-RcppExport SEXP cpr_coarsen_ordinate(SEXP xSEXP, SEXP xiSEXP, SEXP thetaSEXP, SEXP orderSEXP) {
+RcppExport SEXP _cpr_coarsen_ordinate(SEXP xSEXP, SEXP xiSEXP, SEXP thetaSEXP, SEXP orderSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -36,7 +41,7 @@ END_RCPP
 }
 // hat_ordinate
 arma::vec hat_ordinate(double x, const arma::vec& xi, const arma::vec& theta, unsigned int order);
-RcppExport SEXP cpr_hat_ordinate(SEXP xSEXP, SEXP xiSEXP, SEXP thetaSEXP, SEXP orderSEXP) {
+RcppExport SEXP _cpr_hat_ordinate(SEXP xSEXP, SEXP xiSEXP, SEXP thetaSEXP, SEXP orderSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -50,7 +55,7 @@ END_RCPP
 }
 // insertion_matrix
 arma::mat insertion_matrix(double x, const arma::vec& xi, unsigned int order);
-RcppExport SEXP cpr_insertion_matrix(SEXP xSEXP, SEXP xiSEXP, SEXP orderSEXP) {
+RcppExport SEXP _cpr_insertion_matrix(SEXP xSEXP, SEXP xiSEXP, SEXP orderSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -63,7 +68,7 @@ END_RCPP
 }
 // weigh_iknots
 Rcpp::NumericVector weigh_iknots(const arma::vec& xi, const arma::mat& theta, unsigned int order, unsigned int p);
-RcppExport SEXP cpr_weigh_iknots(SEXP xiSEXP, SEXP thetaSEXP, SEXP orderSEXP, SEXP pSEXP) {
+RcppExport SEXP _cpr_weigh_iknots(SEXP xiSEXP, SEXP thetaSEXP, SEXP orderSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -77,7 +82,7 @@ END_RCPP
 }
 // bbasis__impl
 Rcpp::NumericMatrix bbasis__impl(arma::vec x, arma::vec iknots, arma::vec bknots, unsigned int order);
-RcppExport SEXP cpr_bbasis__impl(SEXP xSEXP, SEXP iknotsSEXP, SEXP bknotsSEXP, SEXP orderSEXP) {
+RcppExport SEXP _cpr_bbasis__impl(SEXP xSEXP, SEXP iknotsSEXP, SEXP bknotsSEXP, SEXP orderSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -91,7 +96,7 @@ END_RCPP
 }
 // bsplineD1__impl
 Rcpp::NumericVector bsplineD1__impl(arma::vec x, unsigned int j, unsigned int order, arma::vec knots);
-RcppExport SEXP cpr_bsplineD1__impl(SEXP xSEXP, SEXP jSEXP, SEXP orderSEXP, SEXP knotsSEXP) {
+RcppExport SEXP _cpr_bsplineD1__impl(SEXP xSEXP, SEXP jSEXP, SEXP orderSEXP, SEXP knotsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -105,7 +110,7 @@ END_RCPP
 }
 // bsplineD2__impl
 Rcpp::NumericVector bsplineD2__impl(arma::vec x, unsigned int j, unsigned int order, arma::vec knots);
-RcppExport SEXP cpr_bsplineD2__impl(SEXP xSEXP, SEXP jSEXP, SEXP orderSEXP, SEXP knotsSEXP) {
+RcppExport SEXP _cpr_bsplineD2__impl(SEXP xSEXP, SEXP jSEXP, SEXP orderSEXP, SEXP knotsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -119,7 +124,7 @@ END_RCPP
 }
 // diag_only
 Rcpp::NumericVector diag_only(const arma::mat& A, const arma::mat& B);
-RcppExport SEXP cpr_diag_only(SEXP ASEXP, SEXP BSEXP) {
+RcppExport SEXP _cpr_diag_only(SEXP ASEXP, SEXP BSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -131,7 +136,7 @@ END_RCPP
 }
 // matrix_rank
 double matrix_rank(Rcpp::NumericMatrix x);
-RcppExport SEXP cpr_matrix_rank(SEXP xSEXP) {
+RcppExport SEXP _cpr_matrix_rank(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -142,7 +147,7 @@ END_RCPP
 }
 // tp__impl
 arma::mat tp__impl(const arma::mat& A, const arma::mat& B);
-RcppExport SEXP cpr_tp__impl(SEXP ASEXP, SEXP BSEXP) {
+RcppExport SEXP _cpr_tp__impl(SEXP ASEXP, SEXP BSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -151,4 +156,24 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(tp__impl(A, B));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_cpr_refine_ordinate", (DL_FUNC) &_cpr_refine_ordinate, 4},
+    {"_cpr_coarsen_ordinate", (DL_FUNC) &_cpr_coarsen_ordinate, 4},
+    {"_cpr_hat_ordinate", (DL_FUNC) &_cpr_hat_ordinate, 4},
+    {"_cpr_insertion_matrix", (DL_FUNC) &_cpr_insertion_matrix, 3},
+    {"_cpr_weigh_iknots", (DL_FUNC) &_cpr_weigh_iknots, 4},
+    {"_cpr_bbasis__impl", (DL_FUNC) &_cpr_bbasis__impl, 4},
+    {"_cpr_bsplineD1__impl", (DL_FUNC) &_cpr_bsplineD1__impl, 4},
+    {"_cpr_bsplineD2__impl", (DL_FUNC) &_cpr_bsplineD2__impl, 4},
+    {"_cpr_diag_only", (DL_FUNC) &_cpr_diag_only, 2},
+    {"_cpr_matrix_rank", (DL_FUNC) &_cpr_matrix_rank, 1},
+    {"_cpr_tp__impl", (DL_FUNC) &_cpr_tp__impl, 2},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_cpr(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }

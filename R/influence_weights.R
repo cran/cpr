@@ -3,8 +3,6 @@
 #' Determine the influence weight of each internal knot on each marginal of a
 #' tensor product.
 #'
-#' @author Peter DeWitt \email{dewittpe@gmail.com}
-#'
 #' @param x a \code{cpr_cp} or \code{cpr_cn} object
 #' @param p the order of the norm, default \code{p = 2}.
 #' @param n_polycoef for influence weights in tensor products, this parameter
@@ -14,7 +12,7 @@
 #' objects.
 #'
 #' @return
-#' A data_frame with two elements, the internal knots (iknots) and the weights.
+#' A \code{data.frame} with two elements, the internal knots (iknots) and the weights.
 #'
 #' @export
 influence_weights <- function(x, p = 2, margin = seq_along(x$bspline_list), n_polycoef = 20L) {
@@ -24,10 +22,10 @@ influence_weights <- function(x, p = 2, margin = seq_along(x$bspline_list), n_po
 #' @export
 influence_weights.cpr_cp <- function(x, p = 2, margin = NULL, n_polycoef = NULL) {
   if (length(x$iknots) > 0) {
-    iw <- .Call('cpr_weigh_iknots', PACKAGE = 'cpr', x$xi, matrix(x$cp$theta, ncol = 1), x$order, p)
-    dplyr::data_frame(iknots = x$iknots, w = c(iw))
+    iw <- .Call('_cpr_weigh_iknots', PACKAGE = 'cpr', x$xi, matrix(x$cp$theta, ncol = 1), x$order, p)
+    data.frame(iknots = x$iknots, w = c(iw))
   } else {
-    dplyr::data_frame(iknots = numeric(0), w = numeric(0))
+    data.frame(iknots = numeric(0), w = numeric(0))
   }
 
 }
@@ -73,21 +71,23 @@ influence_weights.cpr_cn <- function(x, p = 2, margin = seq_along(x$bspline_list
            yy = marginal_thetas,
            SIMPLIFY = FALSE)
 
-  wghts <- 
+  wghts <-
     lapply(seq_along(x$bspline_list)[margin],
            function(idx) {
-             wghts <-
-               lapply(split(polynomial_coef[[idx]], col(polynomial_coef[[idx]])),
-                      function(tt, bmat) {
-                        influence_weights.cpr_cp(cp(bmat, tt), p)
-                      },
-                      bmat = x$bspline_list[[idx]])
-             wghts <- dplyr::bind_rows(wghts)
-             wghts <- dplyr::group_by_(wghts, ~ iknots)
-             wghts <- dplyr::summarize_(wghts, ~ max(w))
-             wghts
+             lapply(split(polynomial_coef[[idx]], col(polynomial_coef[[idx]])),
+                    function(tt, bmat) {
+                      influence_weights.cpr_cp(cp(bmat, tt), p)
+                    },
+                    bmat = x$bspline_list[[idx]])
            })
-  out <- lapply(iknots, function(ik) dplyr::data_frame(iknots = ik, `max(w)` = rep(Inf, length(ik))))
+
+  wghts <- lapply(wghts, do.call, what = rbind)
+  wghts <- lapply(wghts, function(x) tapply(x[["w"]], x[["iknots"]], max, simplify = FALSE))
+  wghts <- lapply(wghts, function(x) {
+              data.frame(iknots = as.numeric(names(x)), max_w = unlist(unname(x)))
+           })
+
+  out <- lapply(iknots, function(ik) data.frame(iknots = ik, max_w = rep(Inf, length(ik))))
   out[seq_along(x$bspline_list) %in% margin] <- wghts
   out
-} 
+}

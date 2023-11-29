@@ -2,7 +2,7 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' Knot Insertion, Removal, and Reinsertion
-#' 
+#'
 #' Functions for the insertion, removal, and reinsertion of internal knots for
 #' B-splines.
 #'
@@ -24,13 +24,11 @@
 #' in knot insertion matrix.
 #'
 #' Examples for the \code{refine_ordinate}, \code{coarsen_ordinate}, and
-#' \code{hat_ordinate} are best shown in the vignette, 
-#' \code(vignette("cpr-pkg", package = "cpr")}.
+#' \code{hat_ordinate} are best shown in the vignette,
+#' \code{vignette("cpr-pkg", package = "cpr")}.
 #'
 #' \code{iknot_weights} returns a vector with the 'importance weight' of each
 #' of the internal knots in \code{xi}.
-#'
-#' @author Peter DeWitt \email{dewittpe@gmail.com}
 #'
 #' @param x the value of the knot to be inserted into the knot vector
 #' @param xi the (whole) knot vector, including the repeated boundary knots.
@@ -51,69 +49,82 @@
 #' @export
 #' @rdname boehm
 refine_ordinate <- function(x, xi, theta, order = 4L) {
-    .Call('cpr_refine_ordinate', PACKAGE = 'cpr', x, xi, theta, order)
+    .Call(`_cpr_refine_ordinate`, x, xi, theta, order)
 }
 
 #' @export
 #' @rdname boehm
 coarsen_ordinate <- function(x, xi, theta, order = 4L) {
-    .Call('cpr_coarsen_ordinate', PACKAGE = 'cpr', x, xi, theta, order)
+    .Call(`_cpr_coarsen_ordinate`, x, xi, theta, order)
 }
 
 #' @export
 #' @rdname boehm
 hat_ordinate <- function(x, xi, theta, order = 4L) {
-    .Call('cpr_hat_ordinate', PACKAGE = 'cpr', x, xi, theta, order)
+    .Call(`_cpr_hat_ordinate`, x, xi, theta, order)
 }
 
 #' @export
 #' @rdname boehm
 insertion_matrix <- function(x, xi, order = 4L) {
-    .Call('cpr_insertion_matrix', PACKAGE = 'cpr', x, xi, order)
+    .Call(`_cpr_insertion_matrix`, x, xi, order)
 }
 
 weigh_iknots <- function(xi, theta, order = 4L, p = 2L) {
-    .Call('cpr_weigh_iknots', PACKAGE = 'cpr', xi, theta, order, p)
+    .Call(`_cpr_weigh_iknots`, xi, theta, order, p)
 }
 
 bbasis__impl <- function(x, iknots, bknots, order) {
-    .Call('cpr_bbasis__impl', PACKAGE = 'cpr', x, iknots, bknots, order)
+    .Call(`_cpr_bbasis__impl`, x, iknots, bknots, order)
 }
 
 bsplineD1__impl <- function(x, j, order, knots) {
-    .Call('cpr_bsplineD1__impl', PACKAGE = 'cpr', x, j, order, knots)
+    .Call(`_cpr_bsplineD1__impl`, x, j, order, knots)
 }
 
 bsplineD2__impl <- function(x, j, order, knots) {
-    .Call('cpr_bsplineD2__impl', PACKAGE = 'cpr', x, j, order, knots)
+    .Call(`_cpr_bsplineD2__impl`, x, j, order, knots)
 }
 
 diag_only <- function(A, B) {
-    .Call('cpr_diag_only', PACKAGE = 'cpr', A, B)
+    .Call(`_cpr_diag_only`, A, B)
 }
 
 #' Rank of a Matrix
 #'
 #' Determine the rank (number of linearly independent columns) of a matrix.
 #'
-#' Implimentation via the Armadillo C++ linear algrebra library.  The function
-#' returns the rank of the matix \code{x}.  The computation is based on the
-#' singular value decomposition of the matrix; a std::runtime_error excetion
+#' Implementation via the Armadillo C++ linear algebra library.  The function
+#' returns the rank of the matrix \code{x}.  The computation is based on the
+#' singular value decomposition of the matrix; a std::runtime_error exception
 #' will be thrown if the decomposition fails.  Any singular values less than
-#' the tolerance are treated as zeros.  The tolerance is max(m, n) * max_sv *
-#' datum::eps, where m is the number of rows of x, n is the number of columns
-#' of x, max_sv is the maximal singular value of x, and datum::eps is the
-#' difference between 1 and the least value greater than 1 that is
-#' representable.
-#'
-#' @author Peter DeWitt \email{dewittpe@gmail.com}
+#' the tolerance are treated as zeros.  The tolerance is
+#' \code{max(m, n) * max_sv * arma::datum::eps}, where \code{m} is the number
+#' of rows of \code{x}, \code{n} is the number of columns of \code{x},
+#' \code{max_sv} is the maximal singular value of \code{x}, and
+#' \code{arma::datum::eps} is the difference between 1 and the least value
+#' greater than 1 that is representable.
 #'
 #' @param x a numeric matrix
 #'
 #' @return
 #' the rank of the matrix as a numeric value.
 #'
-#' @example examples/matrix_rank.R
+#' @examples
+#' # Check the rank of a matrix
+#' set.seed(42)
+#' mat <- matrix(rnorm(25000 * 120), nrow = 25000)
+#' matrix_rank(mat) == ncol(mat)
+#' matrix_rank(mat) == 120L
+#'
+#' # A full rank B-spline basis
+#' bmat <- bsplines(seq(0, 1, length = 100), df = 15)
+#' matrix_rank(bmat) == 15L
+#'
+#' # A rank deficient B-spline basis
+#' bmat <- bsplines(seq(0, 1, length = 100), iknots = c(0.001, 0.002))
+#' ncol(bmat) == 6L
+#' matrix_rank(bmat) == 5L
 #'
 #' @references
 #'
@@ -122,10 +133,10 @@ diag_only <- function(A, B) {
 #'
 #' @export
 matrix_rank <- function(x) {
-    .Call('cpr_matrix_rank', PACKAGE = 'cpr', x)
+    .Call(`_cpr_matrix_rank`, x)
 }
 
 tp__impl <- function(A, B) {
-    .Call('cpr_tp__impl', PACKAGE = 'cpr', A, B)
+    .Call(`_cpr_tp__impl`, A, B)
 }
 

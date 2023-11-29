@@ -1,7 +1,27 @@
-# Version 0.2.2.9000
+# Version 0.3.0
+
+## New Examples
+* `cpr` has examples
+
+## Other Changes
+* Depends on Rcpp >= 0.12.11 (actually moved to >= 1.0.11) to handle registering native routines.
+* Moves rgl from `Imports` to `Suggests` (re #36)
+* Refactoring base code to eliminate the use of dplyr, tidyr, tibble, etc.
+  Focus on base R methods to reduce install dependencies and improve long term
+  stability of the package.
+* Require R > 3.5.0
+* Stop using testthat for testing
+* Remove use of the tidyr, dplyr
+* Improve documentation
+* Minor bug fixes
+* Replace use of now deprecated `ggplot2::aes_string`
+
+# Version 0.2.3
+First public release.
 
 ## New Features
-* `plot.cpr_cn` suports `rgl` and `plot3D` graphics
+* `plot.cpr_cn` supports `rgl` and `plot3D` graphics
+* start of a vignette.
 
 # Version 0.2.2
 
@@ -23,16 +43,16 @@ Documentation improvements.
 * `plot.cpr_cn` lets the user plot 2D surfaces for tensor product surfaces.  The
   plots are for the whole surface if the input is a 2D tensor product, and is a
   2D slice evaluated at a given value for other margins for 3+ dimensional
-  tensor products.  
+  tensor products.
 * `is.` a collection of `is.cpr_cp`, `is.cpr_bs`, ... functions added.
 * The dataset `spdg` has been added to the package.
 
-## Non-User Visible Changes
+## Other Changes
 * removed a redundant `build_tensor` definition
 
 # Version 0.2.0
 This version has a fairly polished set of tools for b-splines, cpr, and cnr.
-This version seems to be in a good place for use in the three major papers 
+This version seems to be in a good place for use in the three major papers
 
 1. Methods 1: uni-variable functions,
 2. Methods 2: multi-variable functions, and
@@ -54,12 +74,12 @@ Continued development should be focused on bug fixes and minor enhancements.
   sequence and numeric values in `plot.cpr_bs` (#18)
 
 ## Bug Fixes
-* `from` and `to` args for `plot.cpr_cpr` fixed (#14)
+* `from` and `to` arguments for `plot.cpr_cpr` fixed (#14)
 * correct construction of missing `iknots` argument in `btensor`
 * `keep` is correctly handled in the `cnr` call.
 * `show_xi` correctly handled in the `plot.cpr_cp` call.
 
-## Non-User visible changes
+## Non visible changes
 * non-exported function `knot_expr` created to help with plotting the knot
   locations in `cpr:::plot.cpr_bs`.
 
@@ -70,7 +90,7 @@ Continued development should be focused on bug fixes and minor enhancements.
   When plotting multiple control polygons and splines, this option will make it
   easier to view the spline functions.
 
-# Non-visible changes:
+## Non visible changes
 * Extended testing scripts.
 
 # Version 0.1.0
@@ -97,7 +117,7 @@ series.  The aim for version 0.2.0 will be to have a very similar API for
 
 ## End User non-visible changes:
 * Added the not-to-be-exported function `generate_cp_data`
-* Redesign of the deboor.cpp file so that the bsplines are accessible.  The
+* Redesign of the `deboor.cpp` file so that the `bsplines` are accessible.  The
   prior design only allowed access to the basis, the current design allows
   access to the generic B-splines.
 
@@ -110,12 +130,12 @@ Biometric Society, Student paper competition.  The conference will be held 10 -
 16 July 2016 in Victoria, British Columbia, Canada.
 
 ## Bug Fixes
-* Corrected the attr calls within `cpr` after adjusting the attributes being set
-  on a `cpr_cp`.
+* Corrected the attributes calls within `cpr` after adjusting the attributes
+  being set on a `cpr_cp`.
 
 * `plot.cpr_bs` correctly displays the indices for the knot sequence.
 
-## End User Visible changes: 
+## End User Visible changes:
 * The knot insertion matrix **W** is accessible to the end user in a new way.
   Names of functions in `boehem.cpp` are cleaner.
 * `plot.cpr_cpr` allows user to select either control polygons or sums of

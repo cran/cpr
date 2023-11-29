@@ -12,8 +12,7 @@ cn(x, ...)
 
 \method{cn}{cpr_bt}(x, theta, ...)
 
-\method{cn}{formula}(formula, data, method = stats::lm, ...,
-  keep_fit = FALSE, check_rank = TRUE)
+\method{cn}{formula}(formula, data, method = stats::lm, ..., keep_fit = FALSE, check_rank = TRUE)
 
 \method{print}{cpr_cn}(x, ...)
 
@@ -33,7 +32,7 @@ used.}
 \item{data}{a required \code{data.frame}}
 
 \item{method}{the regression method such as \code{\link[stats]{lm}},
-\code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, \code{\link[geepack]{geeglm}}, ...}
+\code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, etc.}
 
 \item{keep_fit}{(logical, defaults to \code{FALSE}).  If \code{TRUE} the
 regression model fit is retained and returned in the the \code{fit} element.
@@ -68,7 +67,4 @@ Generate the control net for a uni-variable B-spline
 \details{
 \code{cn} generates the control net for the given B-spline function.  There
 are several methods for building a control net.
-}
-\author{
-Peter DeWitt \email{dewittpe@gmail.com}
 }

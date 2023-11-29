@@ -4,8 +4,6 @@
 #' the specified internal knots and generate graphics showing the original,
 #' coarsened, and approximated control polygons.
 #'
-#' @author Peter DeWitt \email{dewittpe@gmail.com}
-#'
 #' @param x a \code{cpr_cp} object
 #' @param indices an integer vector specifying the elements of \code{attr(x,
 #' "knots")} to assess.  Defaults to all internal knots.
@@ -14,7 +12,7 @@
 #' @return A \code{cpr_influence_of} object.  This is a list with the following
 #' elements:
 #' \describe{
-#'   \item{weight}{A \code{tibble} (data.frame) showing the influence weight and
+#'   \item{weight}{A \code{data.frame} showing the influence weight and
 #'   relative rank of each internal knot}
 #'   \item{orig_cp}{The original control polygon}
 #'   \item{indices}{The indices of the internal knots assessed.}
@@ -38,10 +36,10 @@ influence_of.cpr_cp <- function(x, indices, ...) {
   if (missing(indices)) {
     indices <- valid_indices
   }
-  
+
   if (length(valid_indices) < 1L) {
     message("No internal knots to assess.")
-    return(invisible()) 
+    return(invisible())
   }
 
 
@@ -55,7 +53,7 @@ influence_of.cpr_cp <- function(x, indices, ...) {
     if (any(x$xi[indices] %in% x$bknots)) {
       stop("Assessing the influence of a boundary knot is inadvisable.",
            call. = FALSE)
-    } 
+    }
   }
 
   xi_to_assess <- as.list(x$xi[indices])
@@ -65,32 +63,32 @@ influence_of.cpr_cp <- function(x, indices, ...) {
   coarsened_iknots <- lapply(coarsened_xi, function(xi) x$iknots[x$iknots %in% xi])
   coarsened_theta <- Map(coarsen_ordinate,
                             x = xi_to_assess,
-                            xi = coarsened_xi, 
-                            MoreArgs = list(theta = x$cp$theta, 
+                            xi = coarsened_xi,
+                            MoreArgs = list(theta = x$cp$theta,
                                             order = x$order))
 
   coarsened_bmat <- Map(bsplines,
                         iknots = coarsened_iknots,
                         MoreArgs = list(x = range(x$xi),
                                         bknots = x$bknots,
-                                        order = x$order)) 
+                                        order = x$order))
   coarsened_cp <- Map(cp, x = coarsened_bmat, theta = coarsened_theta)
 
   reinserted_theta <- Map(hat_ordinate,
                           x = xi_to_assess,
-                          xi = coarsened_xi, 
-                          MoreArgs = list(theta = x$cp$theta, 
+                          xi = coarsened_xi,
+                          MoreArgs = list(theta = x$cp$theta,
                                           order = x$order))
   reinserted_cp <- Map(cp, theta = reinserted_theta,
                        MoreArgs = list(x = orig_bmat))
 
-  weight <- tibble::add_column(influence_weights(x, ...), 
-                               index = valid_indices,
-                               .before = 1)
-  weight <- dplyr::filter_(weight, .dots = ~ index %in% indices)
-  weight <- dplyr::mutate_(weight, .dots = stats::setNames(list(~ rank(w)), "rank"))
+  weight <- data.frame(index = valid_indices)
+  weight <- cbind(weight, influence_weights(x, ...))
 
-  out <- list(weight = weight, 
+  weight <- subset(weight, weight$index %in% indices)
+  weight$rank <- rank(weight$w)
+
+  out <- list(weight = weight,
               orig_cp = x,
               indices = indices,
               coarsened_cp = coarsened_cp,
@@ -98,7 +96,7 @@ influence_of.cpr_cp <- function(x, indices, ...) {
   class(out) <- "cpr_influence_of"
 
   out
-} 
+}
 
 #' @export
 print.cpr_influence_of <- function(x, ...) {
@@ -127,17 +125,21 @@ plot.cpr_influence_of <- function(x, ...) {
              Reinserted <- x$reinserted_cp[[i]]
              plot(Original, Coarsened, Reinserted, ...)
            })
-  .data <- lapply(plots, getElement, name = "data")
+  plot_data <- lapply(plots, getElement, name = "data")
 
-  .data <- dplyr::bind_rows(.data, .id = "index")
-  .data$index <- factor(.data$index, 
+  for(i in seq_along(plot_data)) {
+    plot_data[[i]][["index"]] <- i
+  }
+  plot_data <- do.call(rbind, plot_data)
+
+  plot_data$index <- factor(plot_data$index,
                         levels = seq_along(x$indices),
                         labels = sapply(x$weight$index,
                                         function(i) {
                                           bquote(xi[.(i)])
                                         }))
 
-  ggplot2::`%+%`(plots[[1]], .data) +
+  ggplot2::`%+%`(plots[[1]], plot_data) +
   ggplot2::facet_wrap( ~ index, labeller = ggplot2::label_parsed)
 }
 

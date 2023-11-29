@@ -3,11 +3,9 @@
 #' Generate the control net for a uni-variable B-spline
 #'
 #' \code{cn} generates the control net for the given B-spline function.  There
-#' are several methods for building a control net.  
-#"
-#' @author Peter DeWitt \email{dewittpe@gmail.com}
+#' are several methods for building a control net.
 #'
-#' @param x a \code{cpr_bs} object 
+#' @param x a \code{cpr_bs} object
 #' @param ... arguments passed to the regression method
 #'
 #' @return a \code{cpr_cn} object.  This is a list with the following elements.
@@ -29,7 +27,7 @@
 #'
 #' @export
 #' @rdname cn
-cn <- function(x, ...) { 
+cn <- function(x, ...) {
   UseMethod("cn")
 }
 
@@ -37,11 +35,11 @@ cn <- function(x, ...) {
 #' @rdname cn
 #' @param theta a vector of (regression) coefficients, the ordinates of the
 #'        control net.
-cn.cpr_bt <- function(x, theta, ...) { 
+cn.cpr_bt <- function(x, theta, ...) {
   xi_stars <- lapply(attr(x, "bspline_list"), attr, which = "xi_star")
 
   out <-
-    list(cn      = dplyr::tbl_df(cbind(do.call(expand.grid, xi_stars), theta)),
+    list(cn      = data.frame(cbind(do.call(expand.grid, xi_stars), theta)),
          bspline_list = attr(x, "bspline_list"),
          call    = match.call(),
          keep_fit = NA,
@@ -49,7 +47,7 @@ cn.cpr_bt <- function(x, theta, ...) {
          loglik  = NA,
          rmse    = NA)
   class(out) <- c("cpr_cn", class(out))
-  out 
+  out
 }
 
 #' @export
@@ -58,20 +56,20 @@ cn.cpr_bt <- function(x, theta, ...) {
 #'        used.
 #' @param data a required \code{data.frame}
 #' @param method the regression method such as \code{\link[stats]{lm}},
-#'        \code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, \code{\link[geepack]{geeglm}}, ...
+#'        \code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, etc.
 #' @param keep_fit (logical, defaults to \code{FALSE}).  If \code{TRUE} the
 #' regression model fit is retained and returned in the the \code{fit} element.
 #' If \code{FALSE} the regression model is not saved and the \code{fit} element will be \code{NA}.
 #' @param check_rank (logical, defaults to \code{TRUE}) if TRUE check that the
 #' design matrix is full rank.
-cn.formula <- function(formula, data, method = stats::lm, ..., keep_fit = FALSE, check_rank = TRUE) { 
+cn.formula <- function(formula, data, method = stats::lm, ..., keep_fit = FALSE, check_rank = TRUE) {
   # check for some formula specification issues
   fterms <- stats::terms(formula)
   fterms
   if (sum(grepl("btensor", attr(fterms, "term.labels"))) != 1) {
     stop("cpr::btensor() must appear once, with no effect modifiers, on the right hand side of the formula.")
   }
-   
+
   # this function will add f_for_use and data_for_use into this environment
   f_for_use <- data_for_use <- NULL
   generate_cp_formula_data(formula, data)
@@ -92,7 +90,7 @@ cn.formula <- function(formula, data, method = stats::lm, ..., keep_fit = FALSE,
               immediate. = TRUE)
     keep_fit <- TRUE
     }
-  } 
+  }
 
   cl <- as.list(match.call())
   cl[[1]] <- as.name("cn")
@@ -102,8 +100,8 @@ cn.formula <- function(formula, data, method = stats::lm, ..., keep_fit = FALSE,
   xi_stars <- lapply(attr(Bmat, "bspline_list"), attr, which = "xi_star")
 
   out <-
-    list(cn      = dplyr::tbl_df(cbind(do.call(expand.grid, xi_stars),
-                                 theta   = as.vector(theta(fit)))), 
+    list(cn      = data.frame(cbind(do.call(expand.grid, xi_stars),
+                                 theta   = as.vector(theta(fit)))),
          bspline_list = attr(Bmat, "bspline_list"),
          call    = cl,
          keep_fit = keep_fit,
@@ -120,7 +118,7 @@ cn.formula <- function(formula, data, method = stats::lm, ..., keep_fit = FALSE,
 #' @method print cpr_cn
 #' @export
 #' @rdname cn
-print.cpr_cn <- function(x, ...) { 
+print.cpr_cn <- function(x, ...) {
   print(x$cn, ...)
 }
 
@@ -128,17 +126,20 @@ print.cpr_cn <- function(x, ...) {
 #' @param object a \code{cpr_cn} object
 #' @rdname cn
 summary.cpr_cn <- function(object, ...) {
-  out <- 
-    c(list(dfs        = length(object$cn$theta),
-           loglik     = object$loglik,
-           rmse       = object$rmse), 
-      stats::setNames(lapply(lapply(object$bspline_list, attr, which = "iknots"), length),
-                      paste0("n_iknots", seq_along(object$bspline_list))),
-      stats::setNames(lapply(lapply(lapply(object$bspline_list, attr, which = "iknots"),
-                                    function(x) if (length(x)) { x } else { NA }),
-                             list),
-                      paste0("iknots", seq_along(object$bspline_list)))
-      )
+  iknots <- lapply(object$bspline_list, attr, which = "iknots")
+  names(iknots) <- paste0("iknots", seq_along(iknots))
 
-  dplyr::as_data_frame(out)
+  out <-
+    data.frame(dfs        = length(object$cn$theta),
+               loglik     = object$loglik,
+               rmse       = object$rmse)
+
+  for(i in seq_along(iknots)) {
+    nm <- names(iknots)[i]
+    out[[paste0("n_", nm)]] <- length(iknots[[i]])
+    out[[nm]] <- I(iknots[i])
+  }
+
+  out
+
 }

@@ -13,16 +13,21 @@ cp(x, ...)
 
 \method{cp}{cpr_bs}(x, theta, ...)
 
-\method{cp}{formula}(formula, data, method = stats::lm, ...,
-  keep_fit = FALSE, check_rank = TRUE)
+\method{cp}{formula}(formula, data, method = stats::lm, ..., keep_fit = FALSE, check_rank = TRUE)
 
 \method{print}{cpr_cp}(x, ...)
 
-\method{summary}{cpr_cp}(object, wiggle = FALSE, integrate.args = list(),
-  ...)
+\method{summary}{cpr_cp}(object, wiggle = FALSE, integrate.args = list(), ...)
 
-\method{plot}{cpr_cp}(x, ..., show_cp = TRUE, show_spline = FALSE,
-  show_xi = TRUE, color = FALSE, n = 100)
+\method{plot}{cpr_cp}(
+  x,
+  ...,
+  show_cp = TRUE,
+  show_spline = FALSE,
+  show_xi = TRUE,
+  color = FALSE,
+  n = 100
+)
 }
 \arguments{
 \item{x}{a \code{cpr_bs} object}
@@ -38,7 +43,7 @@ used.}
 \item{data}{a required \code{data.frame}}
 
 \item{method}{the regression method such as \code{\link[stats]{lm}},
-\code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, \code{\link[geepack]{geeglm}}, ...}
+\code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, etc.}
 
 \item{keep_fit}{(logical, default value is \code{FALSE}).  If \code{TRUE} the
 regression model fit is retained and returned in as the \code{fit} element.
@@ -66,7 +71,7 @@ function?}
 respective control polygons.}
 
 \item{color}{Boolean (default FALSE) if more than one \code{cpr_cp} object is
-to be plotted, set this value to TRUE to have the graphic in color (linetypes
+to be plotted, set this value to TRUE to have the graphic in color (line types
 will be used regardless of the color setting).}
 
 \item{n}{the number of data points to use for plotting the spline}
@@ -104,15 +109,12 @@ plot(cp1, cp2, color = TRUE)
 plot(cp1, cp2, show_spline = TRUE, color = TRUE)
 
 # via formula
-dat <- dplyr::data_frame(x = xvec, y = sin((x - 2)/pi) + 1.4 * cos(x/pi))
-cp3 <- cp(y ~ cpr::bsplines(x) + 0, data = dat)
+dat <- data.frame(x = xvec, y = sin((xvec - 2)/pi) + 1.4 * cos(xvec/pi))
+cp3 <- cp(y ~ cpr::bsplines(x), data = dat)
 
 # plot the control polygon, spline and target data.
-plot(cp3, show_spline = TRUE) + 
-  ggplot2::geom_line(mapping = ggplot2::aes_string(x = "x", y = "y"), 
+plot(cp3, show_spline = TRUE) +
+  ggplot2::geom_line(mapping = ggplot2::aes(x = x, y = y),
                      data = dat, linetype = 2, color = "red")
 
-}
-\author{
-Peter DeWitt \email{dewittpe@gmail.com}
 }

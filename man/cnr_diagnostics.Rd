@@ -10,7 +10,7 @@
 \item{x}{a \code{cpr_cnr} object}
 
 \item{type}{type of diagnostic plot.
-\code{"loglik"} for the loglikihood by degrees of freedom, 
+\code{"loglik"} for the log likelihood by degrees of freedom,
 \code{"rmse"} for root mean squared residuals by model index}
 
 \item{from}{the first index of \code{x} to plot}
@@ -22,7 +22,4 @@
 \description{
 A collection of function for the inspection and evaluation of the control
 polygon reduction.
-}
-\author{
-Peter DeWitt \email{dewittpe@gmail.com}
 }

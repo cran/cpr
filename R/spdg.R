@@ -1,9 +1,10 @@
-#' Simulated Prognanediol-glucuronid (PDG) Data
+#' Simulated Pregnanediol glucuronide (PDG) Data
 #'
 #' A Simulated data set based on the Study of Women's Health Across the Nation
 #' (SWAN) Daily Hormone Study (DHS).
 #'
-#' Prognanediol-glucuronid (PDG) is the urine metabolite of progesterone.  This
+#' 
+#' Pregnanediol glucuronide (PDG) is the urine metabolite of progesterone.  This
 #' data set was simulated to have similar
 #' characteristics to a subset of the SWAN DHS data.  The SWAN DHS data was the
 #' motivating data set for the method development that lead to the \code{cpr}
@@ -11,16 +12,13 @@
 #' been provided for use in examples and instructions for use of the \code{cpr}
 #' package.
 #'
-#' @author Peter DeWitt \email{dewittpe@gmail.com}
-#'
 #' @references
 #' Santoro, Nanette, et al. "Body size and ethnicity are associated with
 #' menstrual cycle alterations in women in the early menopausal transition: The
 #' Study of Women's Health across the Nation (SWAN) Daily Hormone Study." The
 #' Journal of Clinical Endocrinology & Metabolism 89.6 (2004): 2622-2631.
 #'
-#' @format a \code{data.frame}, carries the \code{\link[dplyr]{tbl_df}} and
-#' \code{\link[dplyr]{tbl}} classes from \code{dplyr}. Variables in the data
+#' @format a \code{data.frame}. Variables in the data
 #' set:
 #' \describe{
 #'  \item{id}{Subject ID}
@@ -42,5 +40,3 @@
 #' set please visit \url{https://github.com/dewittpe/cpr} and look at the
 #' scripts in the data-raw directory.
 "spdg"
-
-

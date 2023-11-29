@@ -3,9 +3,9 @@
 \docType{data}
 \name{spdg}
 \alias{spdg}
-\title{Simulated Prognanediol-glucuronid (PDG) Data}
-\format{a \code{data.frame}, carries the \code{\link[dplyr]{tbl_df}} and
-\code{\link[dplyr]{tbl}} classes from \code{dplyr}. Variables in the data
+\title{Simulated Pregnanediol glucuronide (PDG) Data}
+\format{
+a \code{data.frame}. Variables in the data
 set:
 \describe{
  \item{id}{Subject ID}
@@ -21,7 +21,8 @@ set:
  \item{day}{A scaled day-of-cycle between [-1, 1] with 0 for the DLT.  See
  Details}
  \item{pdg}{A simulated PDG value}
-}}
+}
+}
 \source{
 This is simulated data.  To see the script that generated the data
 set please visit \url{https://github.com/dewittpe/cpr} and look at the
@@ -35,7 +36,7 @@ A Simulated data set based on the Study of Women's Health Across the Nation
 (SWAN) Daily Hormone Study (DHS).
 }
 \details{
-Prognanediol-glucuronid (PDG) is the urine metabolite of progesterone.  This
+Pregnanediol glucuronide (PDG) is the urine metabolite of progesterone.  This
 data set was simulated to have similar
 characteristics to a subset of the SWAN DHS data.  The SWAN DHS data was the
 motivating data set for the method development that lead to the \code{cpr}
@@ -48,8 +49,5 @@ Santoro, Nanette, et al. "Body size and ethnicity are associated with
 menstrual cycle alterations in women in the early menopausal transition: The
 Study of Women's Health across the Nation (SWAN) Daily Hormone Study." The
 Journal of Clinical Endocrinology & Metabolism 89.6 (2004): 2622-2631.
-}
-\author{
-Peter DeWitt \email{dewittpe@gmail.com}
 }
 \keyword{datasets}

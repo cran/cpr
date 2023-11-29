@@ -16,8 +16,6 @@
 #'
 #' See \code{vignette("cpr-pkg", package = "cpr")} for more details.
 #'
-#' @author Peter DeWitt \email{dewittpe@gmail.com}
-#'
 #' @param x a list of variables to build B-spline transforms of.  The tensor
 #' product of these B-splines will be returned.
 #' @param df degrees of freedom.  a list of the degrees of freedom for each
@@ -34,31 +32,56 @@
 #' @return
 #' A matrix with a class cpr_bt
 #'
-#' @example examples/btensor.R
+#' @examples
+#' tp <- with(mtcars,
+#'            btensor(x = list(disp, hp, mpg),
+#'                    iknots = list(numeric(0), c(100, 150), numeric(0)))
+#'            )
+#' tp
+#' utils::str(tp)
+#'
+#' # The equivalent matrix is could be generated as follows
+#' tp2 <- model.matrix( ~ splines::bs(disp, intercept = TRUE) :
+#'                        splines::bs(hp, knots = c(100, 150), intercept = TRUE) :
+#'                        splines::bs(mpg, intercept = TRUE) + 0,
+#'                     data = mtcars)
+#'
+#' all.equal(tp2, unclass(tp), check.attributes = FALSE)
 #'
 #' @export
 btensor <- function(x, df = NULL, iknots = NULL, bknots, order) {
 
-  if (!is.list(x)) { 
+  if (!is.list(x)) {
     warning("wrapping x into a list.")
     x <- list(x)
   }
 
   if (missing(bknots)) {
     bknots <- lapply(x, range)
+  } else {
+    stopifnot(is.list(bknots))
+    stopifnot(length(bknots) == length(x))
+    stopifnot(all(sapply(bknots, length) == 2))
   }
 
   if (missing(order)) {
     order <- as.list(rep(4L, length(x)))
+  } else {
+    stopifnot(is.list(order))
+    stopifnot(length(order) == length(x))
+    stopifnot(all(sapply(order, length) == 1))
+
+    order <- lapply(order, as.integer)
+    stopifnot(all(sapply(order, is.integer)))
   }
 
   if (is.null(df) & is.null(iknots)) {
     iknots <- replicate(length(x), numeric(0), simplify = FALSE)
-  } else if (is.null(iknots) & !is.null(df)) { 
-    iknots <- 
-      mapply(function(xx, dd, oo) { 
+  } else if (is.null(iknots) & !is.null(df)) {
+    iknots <-
+      mapply(function(xx, dd, oo) {
                if (dd < oo) {
-                 warning("df being set to order") 
+                 warning("df being set to order")
                  numeric(0)
                } else if (dd == oo) {
                  numeric(0)
@@ -69,7 +92,7 @@ btensor <- function(x, df = NULL, iknots = NULL, bknots, order) {
              xx = x, dd = df, oo = order, SIMPLIFY = FALSE)
   } else if (!is.null(iknots) & !is.null(df)) {
     warning("Both iknots and df defined, using iknots")
-  } 
+  }
 
   if (any(c(length(iknots), length(bknots), length(order)) != length(x))) {
     stop("Length of x, iknots, bknots, and order must be the same.")
@@ -80,7 +103,7 @@ btensor <- function(x, df = NULL, iknots = NULL, bknots, order) {
                       iknots = iknots,
                       bknots = bknots,
                       order = order)
-                         
+
   M <- build_tensor(bspline_list)
 
   attr(M, "bspline_list") = bspline_list

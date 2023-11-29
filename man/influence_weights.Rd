@@ -4,8 +4,12 @@
 \alias{influence_weights}
 \title{Influence Weights}
 \usage{
-influence_weights(x, p = 2, margin = seq_along(x$bspline_list),
-  n_polycoef = 20L)
+influence_weights(
+  x,
+  p = 2,
+  margin = seq_along(x$bspline_list),
+  n_polycoef = 20L
+)
 }
 \arguments{
 \item{x}{a \code{cpr_cp} or \code{cpr_cn} object}
@@ -20,12 +24,9 @@ set the number of polynomial coefficients to use in each of the marginal
 calculations.  Ignored for \code{cpr_cp} objects.}
 }
 \value{
-A data_frame with two elements, the internal knots (iknots) and the weights.
+A \code{data.frame} with two elements, the internal knots (iknots) and the weights.
 }
 \description{
 Determine the influence weight of each internal knot on each marginal of a
 tensor product.
-}
-\author{
-Peter DeWitt \email{dewittpe@gmail.com}
 }

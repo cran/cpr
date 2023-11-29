@@ -10,8 +10,5 @@ extract_cpr_bsplines(form)
 \item{form}{a formula}
 }
 \description{
-Non-exported function.  Might be depericated.
-}
-\author{
-Peter DeWitt \email{dewittpe@gmail.com}
+Non-exported function.  Might be depreciated.
 }
