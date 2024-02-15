@@ -14,11 +14,11 @@
 #' as
 #' \code{ model.matrix( ~ bsplines(X) : bsplines(Y) : bsplines(Z) + 0) }.
 #'
-#' See \code{vignette("cpr-pkg", package = "cpr")} for more details.
+#' See \code{vignette(topic = "cnr", package = "cpr")} for more details.
 #'
 #' @param x a list of variables to build B-spline transforms of.  The tensor
 #' product of these B-splines will be returned.
-#' @param df degrees of freedom.  a list of the degrees of freedom for each
+#' @param df degrees of freedom.  A list of the degrees of freedom for each
 #' marginal.
 #' @param iknots a list of internal knots for each x.  If omitted, the default
 #' is to place no internal knots for all x.  If specified, the list needs to
@@ -30,23 +30,16 @@
 #' @param order  a list of the order for each x; defaults to 4L for all x.
 #'
 #' @return
-#' A matrix with a class cpr_bt
+#' A matrix with a class \code{cpr_bt}
+#'
+#' @seealso \code{\link{bsplines}}, \code{vignette(topic = "cnr", package = "cpr")}
 #'
 #' @examples
 #' tp <- with(mtcars,
-#'            btensor(x = list(disp, hp, mpg),
+#'            btensor(x = list(d = disp, h = hp, m = mpg),
 #'                    iknots = list(numeric(0), c(100, 150), numeric(0)))
 #'            )
 #' tp
-#' utils::str(tp)
-#'
-#' # The equivalent matrix is could be generated as follows
-#' tp2 <- model.matrix( ~ splines::bs(disp, intercept = TRUE) :
-#'                        splines::bs(hp, knots = c(100, 150), intercept = TRUE) :
-#'                        splines::bs(mpg, intercept = TRUE) + 0,
-#'                     data = mtcars)
-#'
-#' all.equal(tp2, unclass(tp), check.attributes = FALSE)
 #'
 #' @export
 btensor <- function(x, df = NULL, iknots = NULL, bknots, order) {
@@ -78,6 +71,7 @@ btensor <- function(x, df = NULL, iknots = NULL, bknots, order) {
   if (is.null(df) & is.null(iknots)) {
     iknots <- replicate(length(x), numeric(0), simplify = FALSE)
   } else if (is.null(iknots) & !is.null(df)) {
+    stopifnot(length(df) == length(x))
     iknots <-
       mapply(function(xx, dd, oo) {
                if (dd < oo) {
@@ -104,7 +98,7 @@ btensor <- function(x, df = NULL, iknots = NULL, bknots, order) {
                       bknots = bknots,
                       order = order)
 
-  M <- build_tensor(bspline_list)
+  M <- do.call(build_tensor, bspline_list)
 
   attr(M, "bspline_list") = bspline_list
   attr(M, "call") <- match.call()
@@ -117,6 +111,10 @@ btensor <- function(x, df = NULL, iknots = NULL, bknots, order) {
 #' @method print cpr_bt
 #' @export
 print.cpr_bt <- function(x, ...) {
-  cat("Tensor Product Matrix dims: [", paste(format(dim(x), big.mark = ",", trim = TRUE), collapse = " x "), "]\n\n", sep = "")
-  utils::str(x, max.level = 1)
+  cat("Tensor Product Matrix dims: ["
+      , paste(format(dim(x), big.mark = ",", trim = TRUE), collapse = " x ")
+      , "]\n\n"
+      , sep = ""
+  )
+  invisible(x)
 }

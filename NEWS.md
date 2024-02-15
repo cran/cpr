@@ -1,3 +1,53 @@
+# Version 0.4.0
+
+## New Features
+
+* `cpr`'s `progress` argument has been extended to control if a progress bar is
+  used for just the cpr steps, or if a more detailed progress for of the
+  influence weight calculations is reported.
+
+* `influence_of_iknots` gains parallel execution via `pbapply` (#17)
+
+* `plot.cpr_cp` gains the argument `comparitive` which, when set to `FALSE` and
+  only one `cpr_cp` is passed in for plotting, the graphic will appear more like
+  the `plot.cpr_bs` results.  When `comparitive = TRUE` or more than one
+  `cpr_cp` is present, the behavior from v0.3.0 is retained.
+
+* `cp.formula` gains the `methods.args` argument to pass arguments to the
+  regression method instead of relying on `...`.
+
+* `d_order_statistic` and `p_order_statistic` were added.  These functions allow
+  you to get the density of distribution function for the jth order statistic
+  from a sample of size n from a distribution with defined density and
+  distribution functions within R.
+
+* `sign_changes` will count the number of sign changes of the first or second
+  derivative of a spline function.
+
+* `get_spline` returns standard errors and derivatives (#60)
+
+## User Visible Changes
+* `loglikelihood` is not exported in the namespace
+* `summary.cpr_cp` now calculates the "wiggle" of the function by default, that
+  is, changes the default from `wiggle = FALSE` to `wiggle = TRUE`
+* `cp` and `cn` both have the default `keep_fit` argument set to TRUE.  This
+  change was made to simplify the prediction methods.
+* `print.cpr_bt` returns the object invisibly, it used to return a `str(x)`.
+* `print.cpr_cn` returns the object invisibly
+* `print.cpr_cnr` returns the object invisibly
+* `print.cpr_cpr` returns the object invisibly
+
+## Non-User Visible Changes
+* Refactor of c++ defining basis functions, derivatives of basis functions,
+  b-splines structures
+
+* `cp.formula` checks the `formula` and requires that `bsplines` is used once
+  and is the first term on the right hand side of the formula.
+
+## Defunct Functions
+* A major refactor of the internal code as since v0.3.0 has resulted in several
+  functions becoming defunct, see `help(cpr-defunct)` for details.
+
 # Version 0.3.0
 
 ## New Examples

@@ -4,77 +4,51 @@
 \alias{cp}
 \alias{cp.cpr_bs}
 \alias{cp.formula}
-\alias{print.cpr_cp}
-\alias{summary.cpr_cp}
-\alias{plot.cpr_cp}
 \title{Control Polygons}
 \usage{
 cp(x, ...)
 
 \method{cp}{cpr_bs}(x, theta, ...)
 
-\method{cp}{formula}(formula, data, method = stats::lm, ..., keep_fit = FALSE, check_rank = TRUE)
-
-\method{print}{cpr_cp}(x, ...)
-
-\method{summary}{cpr_cp}(object, wiggle = FALSE, integrate.args = list(), ...)
-
-\method{plot}{cpr_cp}(
-  x,
-  ...,
-  show_cp = TRUE,
-  show_spline = FALSE,
-  show_xi = TRUE,
-  color = FALSE,
-  n = 100
+\method{cp}{formula}(
+  formula,
+  data,
+  method = stats::lm,
+  method.args = list(),
+  keep_fit = TRUE,
+  check_rank = TRUE,
+  ...
 )
 }
 \arguments{
 \item{x}{a \code{cpr_bs} object}
 
-\item{...}{arguments passed to the regression method}
+\item{...}{pass through}
 
-\item{theta}{a vector of (regression) coefficients, the ordinates of the
-control polygon.}
+\item{theta}{a vector of (regression) coefficients, the ordinates of the control polygon.}
 
-\item{formula}{a formula that is appropriate for regression method being
-used.}
+\item{formula}{a formula that is appropriate for regression method being used.}
 
 \item{data}{a required \code{data.frame}}
 
 \item{method}{the regression method such as \code{\link[stats]{lm}},
 \code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, etc.}
 
-\item{keep_fit}{(logical, default value is \code{FALSE}).  If \code{TRUE} the
+\item{method.args}{a list of additional arguments to pass to the regression
+method.}
+
+\item{keep_fit}{(logical, default value is \code{TRUE}).  If \code{TRUE} the
 regression model fit is retained and returned in as the \code{fit} element.
 If \code{FALSE} the \code{fit} element with be \code{NA}.}
 
 \item{check_rank}{(logical, defaults to \code{TRUE}) if \code{TRUE} check
 that the design matrix is full rank.}
-
-\item{object}{a \code{cpr_cp} object}
-
-\item{wiggle}{logical, if \code{TRUE} then the integral of the squared second
-derivative of the spline function will be calculated via
-\code{stats::integrate}.}
-
-\item{integrate.args}{a list of arguments passed to \code{cpr::wiggle} and
-ultimately \code{stats::integrate}.}
-
-\item{show_cp}{logical (default \code{TRUE}), show the control polygon(s)?}
-
-\item{show_spline}{logical (default \code{FALSE}) to plot the spline
-function?}
-
-\item{show_xi}{logical (default \code{TRUE}) use
-\code{\link[ggplot2]{geom_rug}} to show the location of the knots in the
-respective control polygons.}
-
-\item{color}{Boolean (default FALSE) if more than one \code{cpr_cp} object is
-to be plotted, set this value to TRUE to have the graphic in color (line types
-will be used regardless of the color setting).}
-
-\item{n}{the number of data points to use for plotting the spline}
+}
+\value{
+a \code{cpr_cp} object, this is a list with the element \code{cp}, a
+data.frame reporting the x and y coordinates of the control polygon.
+Additional elements include the knot sequence, polynomial order, and other
+meta data regarding the construction of the control polygon.
 }
 \description{
 Generate the control polygon for a uni-variable B-spline
@@ -85,11 +59,12 @@ Generate the control polygon for a uni-variable B-spline
 \examples{
 
 # Support
-xvec <- seq(0, 6, length = 500)
+xvec <- runif(n = 500, min = 0, max = 6)
+bknots <- c(0, 6)
 
 # Define the basis matrix
-bmat1 <- cpr::bsplines(x = xvec, iknots = c(1, 1.5, 2.3, 4, 4.5))
-bmat2 <- cpr::bsplines(x = xvec)
+bmat1 <- bsplines(x = xvec, iknots = c(1, 1.5, 2.3, 4, 4.5), bknots = bknots)
+bmat2 <- bsplines(x = xvec, bknots = bknots)
 
 # Define the control vertices ordinates
 theta1 <- c(1, 0, 3.5, 4.2, 3.7, -0.5, -0.7, 2, 1.5)
@@ -109,12 +84,12 @@ plot(cp1, cp2, color = TRUE)
 plot(cp1, cp2, show_spline = TRUE, color = TRUE)
 
 # via formula
-dat <- data.frame(x = xvec, y = sin((xvec - 2)/pi) + 1.4 * cos(xvec/pi))
-cp3 <- cp(y ~ cpr::bsplines(x), data = dat)
+DF  <- data.frame(x = xvec, y = sin((xvec - 2)/pi) + 1.4 * cos(xvec/pi))
+cp3 <- cp(y ~ bsplines(x, bknots = bknots), data = DF)
 
-# plot the control polygon, spline and target data.
-plot(cp3, show_spline = TRUE) +
-  ggplot2::geom_line(mapping = ggplot2::aes(x = x, y = y),
-                     data = dat, linetype = 2, color = "red")
+# plot the spline and target data.
+plot(cp3, show_cp = FALSE, show_spline = TRUE) +
+  ggplot2::geom_line(mapping = ggplot2::aes(x = x, y = y, color = "Target"),
+                     data = DF, linetype = 2)
 
 }

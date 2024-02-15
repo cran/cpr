@@ -15,3 +15,23 @@ control polygon and control net reduction for identifying factors explaining
 variation in daily hormone profiles during the menopausal transition.}
 (2017).
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/dewittpe/cpr/}
+  \item \url{http://www.peteredewitt.com/cpr/}
+  \item Report bugs at \url{https://github.com/dewittpe/cpr/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Peter DeWitt \email{dewittpe@gmail.com} (\href{https://orcid.org/0000-0002-6391-0795}{ORCID})
+
+Other contributors:
+\itemize{
+  \item Samantha MaWhinney \email{sam.mawhinney@ucdenver.edu} [thesis advisor]
+  \item Nichole Carlson \email{nichole.carlson@ucdenver.edu} [thesis advisor]
+}
+
+}
+\keyword{internal}

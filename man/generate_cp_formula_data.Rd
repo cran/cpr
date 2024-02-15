@@ -4,19 +4,29 @@
 \alias{generate_cp_formula_data}
 \title{Generate Control Polygon Formula and Data}
 \usage{
-generate_cp_formula_data(f, data)
+generate_cp_formula_data(f, data, formula_only = FALSE, envir = parent.frame())
 }
 \arguments{
 \item{f}{a formula}
 
 \item{data}{the data set containing the variables in the formula}
+
+\item{formula_only}{if TRUE then only generate the formula, when FALSE, then
+generate and assign the data set too.}
+
+\item{envir}{the environment the generated formula and data set will be
+assigned too.}
+}
+\value{
+TRUE, invisibly.  The return isn't needed as the assignment happens
+within the call.
 }
 \description{
 Construct a \code{data.frame} and \code{formula} to be passed to the
 regression modeling tool to generate a control polygon.
 }
 \details{
-This function is expected to be called from within the \code{cpr::cp}
+This function is expected to be called from within the \code{cp}
 function and is not expected to be called by the end user directly.
 
 \code{generate_cp_data} exists because of the need to build what could be
@@ -29,8 +39,47 @@ factor, then the model matrix will again be rank deficient as a column for
 all levels of the factor will be generated.  We need to replace the intercept
 column of the model matrix with the bspline.  This also needs to be done for
 a variety of possible model calls, \code{\link[stats]{lm}},
-\code{\link{lme4}{lmer}}, etc.
+\code{\link[lme4]{lmer}}, etc.
 
 By returning an explicit \code{formula} and \code{data.frame} for use in the
 fit, we hope to reduce memory use and increase the speed of the cpr method.
+
+We need to know the \code{method} and \code{method.args} to build the data
+set.  For example, for a \code{\link[geepack]{geeglm}} the \code{id} variable
+is needed in the data set and is part of the \code{method.args} not the
+\code{formula}.
+}
+\examples{
+
+ data <-
+   data.frame(
+                x1 = runif(20)
+              , x2 = runif(20)
+              , x3 = runif(20)
+              , xf = factor(rep(c("l1","l2","l3","l4"), each = 5))
+              , xc = rep(c("c1","c2","c3","c4", "c5"), each = 4)
+              , pid = gl(n = 2, k = 10)
+              , pid2 = rep(1:2, each = 10)
+   )
+
+ f <- ~ bsplines(x1, bknots = c(0,1)) + x2 + xf + xc + (x3 | pid2)
+
+ cpr:::generate_cp_formula_data(f, data)
+
+ stopifnot(isTRUE(
+   all.equal(
+             f_for_use
+             ,
+             . ~ bsplines(x1, bknots = c(0, 1)) + x2 + (x3 | pid2) + xfl2 +
+                 xfl3 + xfl4 + xcc2 + xcc3 + xcc4 + xcc5 - 1
+             )
+ ))
+
+ stopifnot(isTRUE(identical(
+   names(data_for_use)
+   ,
+   c("x1", "x2", "x3", "pid", "pid2", "xfl2", "xfl3", "xfl4"
+     , "xcc2" , "xcc3", "xcc4", "xcc5")
+ )))
+
 }

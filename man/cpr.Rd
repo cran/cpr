@@ -2,30 +2,19 @@
 % Please edit documentation in R/cpr.R
 \name{cpr}
 \alias{cpr}
-\alias{summary.cpr_cpr}
 \title{Control Polygon Reduction}
 \usage{
-cpr(x, keep = -1, p = 2, progress = interactive(), ...)
-
-\method{summary}{cpr_cpr}(object, ...)
+cpr(x, progress = c("cpr", "influence", "none"), ...)
 }
 \arguments{
 \item{x}{a \code{cpr_cp} object}
 
-\item{keep}{keep (store) the regression fit for models with \code{keep} or
-fewer internal knots, e.g., \code{keep = 3} will result in the regression fit
-for models with 0, 1, 2, and 3 internal knots being saved in their respective
-\code{cpr_cp} objects.  The default is \code{keep = -1} so that no regression
-models are retained.}
-
-\item{p}{defaults to 2L, the L^p norm used in determining the influence
-weight of each internal knot.}
-
-\item{progress}{show a progress bar.}
+\item{progress}{controls the level of progress messaging.  See Details.}
 
 \item{...}{not currently used}
-
-\item{object}{a \code{cpr_cpr} object}
+}
+\value{
+a list of \code{cpr_cp} objects
 }
 \description{
 Run the Control Polygon Reduction Algorithm.
@@ -33,31 +22,36 @@ Run the Control Polygon Reduction Algorithm.
 \details{
 \code{cpr} runs the control polygon reduction algorithm.
 
-\code{keep} will keep the regression fit as part of the \code{cpr\_cp} object
-for models with up to and including keep fits.  For example, if \code{keep =
-10} then the resulting \code{cpr\_cpr} object will have the regression fit
-stored in the first \code{keep + 1} (zero internal knots, one internal knot,
-\ldots, \code{keep} internal knots) \code{cpr\_cp} objects in the list.  The
-limit on the number of stored regression fits is to keep memory usage down.
+The algorithm is generally speaking fast, but can take a long time to run if
+the number of interior knots of initial control polygon is high.  To help
+track the progress of the execution you can have \code{progress = "cpr"}
+which will show a progress bar incremented for each iteration of the CPR
+algorithm.  \code{progress = "influence"} will use a combination of messages
+and progress bars to report on each step in assessing the influence of all the
+internal knots for each iteration of the CPR algorithm.  See
+\code{\link{influence_of_iknots}} for more details.
 }
 \examples{
 #############################################################################
 # Example 1: find a model for log10(pdg) = f(day) from the spdg data set
-\dontrun{
+\donttest{
 # need the lme4 package to fit a mixed effect model
 require(lme4)
 
 # construct the initial control polygon.  Forth order spline with fifty
 # internal knots.  Remember degrees of freedom equal the polynomial order
 # plus number of internal knots.
-init_cp <- cp(log10(pdg) ~ bsplines(day, df = 54) + (1|id),
+init_cp <- cp(log10(pdg) ~ bsplines(day, df = 24, bknots = c(-1, 1)) + (1|id),
               data = spdg, method = lme4::lmer)
 cpr_run <- cpr(init_cp)
 plot(cpr_run, color = TRUE)
-plot(cpr_run, type = "rmse", to = 10)
 
-# preferable model is in index 4
-preferable_cp <- cpr_run[[4]]
+s <- summary(cpr_run)
+s
+plot(s, type = "rse")
+
+# preferable model is in index 5 by eye
+preferable_cp <- cpr_run[["cps"]][[5]]
 }
 
 #############################################################################
@@ -70,25 +64,38 @@ x <- runif(2500, 0.00, 4.5)
 sim_data <- data.frame(x = x, y = rbinom(2500, 1, p(x)))
 
 # Define the initial control polygon
-init_cp <- cp(formula = y ~ bsplines(x, df = 54, bknots = c(0, 4.5)),
-              family  = binomial(),
+init_cp <- cp(formula = y ~ bsplines(x, df = 24, bknots = c(0, 4.5)),
+              data    = sim_data,
               method  = glm,
-              data    = sim_data)
+              method.args = list(family  = binomial())
+              )
 
-# run CPR, preferable model is in index 7
+# run CPR
 cpr_run <- cpr(init_cp)
-plot(cpr_run, color = TRUE, type = "rmse", to = 15)
-plot(cpr_run, color = TRUE, from = 11, to = 15, show_spline = TRUE)
+
+# preferable model is in index 6
+s <- summary(cpr_run)
+plot(s, color = TRUE, type = "rse")
+
+plot(
+    cpr_run
+  , color = TRUE
+  , from = 5
+  , to = 7
+  , show_spline = TRUE
+  , show_cp = FALSE
+  )
+
 
 # plot the fitted spline and the true p(x)
-sim_data$pred_select_p <-
-  plogis(predict(cpr_run[[7]], newdata = sim_data)$pred)
-
+sim_data$pred_select_p <- plogis(predict(cpr_run[[7]], newdata = sim_data))
 ggplot2::ggplot(sim_data) +
 ggplot2::theme_bw() +
 ggplot2::aes(x = x) +
 ggplot2::geom_point(mapping = ggplot2::aes(y = y), alpha = 0.1) +
-ggplot2::geom_line(mapping = ggplot2::aes(y = pred_select_p, color = "pred_select_p")) +
+ggplot2::geom_line(
+    mapping = ggplot2::aes(y = pred_select_p, color = "pred_select_p")
+  ) +
 ggplot2::stat_function(fun = p, mapping = ggplot2::aes(color = 'p(x)'))
 
 # compare to gam and a binned average
@@ -103,7 +110,9 @@ ggplot2::ggplot(sim_data) +
 ggplot2::theme_bw() +
 ggplot2::aes(x = x) +
 ggplot2::stat_function(fun = p, mapping = ggplot2::aes(color = 'p(x)')) +
-ggplot2::geom_line(mapping = ggplot2::aes(y = pred_select_p, color = "pred_select_p")) +
+ggplot2::geom_line(
+    mapping = ggplot2::aes(y = pred_select_p, color = "pred_select_p")
+  ) +
 ggplot2::stat_smooth(mapping = ggplot2::aes(y = y, color = "gam"),
                      method = "gam",
                      formula = y ~ s(x, bs = "cs"),
@@ -113,4 +122,7 @@ ggplot2::geom_line(data = bin_average
                    , mapping = ggplot2::aes(y = y, color = "bin_average"))
 
 
+}
+\seealso{
+\code{\link{influence_of_iknots}}
 }

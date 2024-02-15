@@ -10,7 +10,7 @@ btensor(x, df = NULL, iknots = NULL, bknots, order)
 \item{x}{a list of variables to build B-spline transforms of.  The tensor
 product of these B-splines will be returned.}
 
-\item{df}{degrees of freedom.  a list of the degrees of freedom for each
+\item{df}{degrees of freedom.  A list of the degrees of freedom for each
 marginal.}
 
 \item{iknots}{a list of internal knots for each x.  If omitted, the default
@@ -25,7 +25,7 @@ use must specify the bknots for each x.}
 \item{order}{a list of the order for each x; defaults to 4L for all x.}
 }
 \value{
-A matrix with a class cpr_bt
+A matrix with a class \code{cpr_bt}
 }
 \description{
 Tensor products of B-splines.
@@ -43,22 +43,16 @@ cycle the quickest, followed by Y, and then Z.  This would be the same result
 as
 \code{ model.matrix( ~ bsplines(X) : bsplines(Y) : bsplines(Z) + 0) }.
 
-See \code{vignette("cpr-pkg", package = "cpr")} for more details.
+See \code{vignette(topic = "cnr", package = "cpr")} for more details.
 }
 \examples{
 tp <- with(mtcars,
-           btensor(x = list(disp, hp, mpg),
+           btensor(x = list(d = disp, h = hp, m = mpg),
                    iknots = list(numeric(0), c(100, 150), numeric(0)))
            )
 tp
-utils::str(tp)
 
-# The equivalent matrix is could be generated as follows
-tp2 <- model.matrix( ~ splines::bs(disp, intercept = TRUE) :
-                       splines::bs(hp, knots = c(100, 150), intercept = TRUE) :
-                       splines::bs(mpg, intercept = TRUE) + 0,
-                    data = mtcars)
-
-all.equal(tp2, unclass(tp), check.attributes = FALSE)
-
+}
+\seealso{
+\code{\link{bsplines}}, \code{vignette(topic = "cnr", package = "cpr")}
 }

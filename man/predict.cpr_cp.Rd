@@ -4,16 +4,27 @@
 \alias{predict.cpr_cp}
 \title{Model Prediction}
 \usage{
-\method{predict}{cpr_cp}(object, newdata, ...)
+\method{predict}{cpr_cp}(object, ...)
 }
 \arguments{
 \item{object}{a \code{cpr_cp} or \code{cpr_cn} object}
 
-\item{newdata}{a \code{data.frame}}
-
-\item{...}{passed to \code{\link[stats]{predict}} from the \code{stats}
-package.}
+\item{...}{passed to \code{\link[stats]{predict}}}
+}
+\value{
+the same as you would get from calling \code{\link[stats]{predict}}
+on the \code{object$fit}.
 }
 \description{
 Model prediction for \code{cpr_cp} and \code{cpr_cn} objects.
+}
+\examples{
+
+acp <- cp(log10(pdg) ~ bsplines(age, df = 12, bknots = c(45, 53))
+           , data = spdg
+          , keep_fit = TRUE)
+acp_pred0 <- predict(acp$fit, se.fit = TRUE)
+acp_pred <- predict(acp, se.fit = TRUE)
+all.equal(acp_pred0, acp_pred)
+
 }

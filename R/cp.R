@@ -5,16 +5,22 @@
 #' \code{cp} generates the control polygon for the given B-spline function.
 #'
 #' @param x a \code{cpr_bs} object
-#' @param ... arguments passed to the regression method
+#' @param ... pass through
+#'
+#' @return a \code{cpr_cp} object, this is a list with the element \code{cp}, a
+#' data.frame reporting the x and y coordinates of the control polygon.
+#' Additional elements include the knot sequence, polynomial order, and other
+#' meta data regarding the construction of the control polygon.
 #'
 #' @examples
 #'
 #' # Support
-#' xvec <- seq(0, 6, length = 500)
+#' xvec <- runif(n = 500, min = 0, max = 6)
+#' bknots <- c(0, 6)
 #'
 #' # Define the basis matrix
-#' bmat1 <- cpr::bsplines(x = xvec, iknots = c(1, 1.5, 2.3, 4, 4.5))
-#' bmat2 <- cpr::bsplines(x = xvec)
+#' bmat1 <- bsplines(x = xvec, iknots = c(1, 1.5, 2.3, 4, 4.5), bknots = bknots)
+#' bmat2 <- bsplines(x = xvec, bknots = bknots)
 #'
 #' # Define the control vertices ordinates
 #' theta1 <- c(1, 0, 3.5, 4.2, 3.7, -0.5, -0.7, 2, 1.5)
@@ -34,24 +40,22 @@
 #' plot(cp1, cp2, show_spline = TRUE, color = TRUE)
 #'
 #' # via formula
-#' dat <- data.frame(x = xvec, y = sin((xvec - 2)/pi) + 1.4 * cos(xvec/pi))
-#' cp3 <- cp(y ~ cpr::bsplines(x), data = dat)
+#' DF  <- data.frame(x = xvec, y = sin((xvec - 2)/pi) + 1.4 * cos(xvec/pi))
+#' cp3 <- cp(y ~ bsplines(x, bknots = bknots), data = DF)
 #'
-#' # plot the control polygon, spline and target data.
-#' plot(cp3, show_spline = TRUE) +
-#'   ggplot2::geom_line(mapping = ggplot2::aes(x = x, y = y),
-#'                      data = dat, linetype = 2, color = "red")
+#' # plot the spline and target data.
+#' plot(cp3, show_cp = FALSE, show_spline = TRUE) +
+#'   ggplot2::geom_line(mapping = ggplot2::aes(x = x, y = y, color = "Target"),
+#'                      data = DF, linetype = 2)
 #'
 #' @export
-#' @rdname cp
 cp <- function(x, ...) {
   UseMethod("cp")
 }
 
 #' @export
 #' @rdname cp
-#' @param theta a vector of (regression) coefficients, the ordinates of the
-#'        control polygon.
+#' @param theta a vector of (regression) coefficients, the ordinates of the control polygon.
 cp.cpr_bs <- function(x, theta, ...) {
   out <- list(cp = data.frame(xi_star = as.numeric(attr(x, "xi_star")),
                               theta   = as.vector(theta)),
@@ -60,10 +64,15 @@ cp.cpr_bs <- function(x, theta, ...) {
               bknots = c(attr(x, "bknots")),
               order  = attr(x, "order"),
               call   = match.call(),
-              keep_fit = NA,
-              fit    = NA,
-              loglik = NA,
-              rmse   = NA)
+              keep_fit = NULL,
+              fit    = NULL,
+              theta = NULL,
+              coefficients = NULL,
+              vcov = NULL,
+              vcov_theta = NULL,
+              loglik = NULL,
+              rss    = NULL,
+              rse    = NULL)
 
   class(out) <- c("cpr_cp", class(out))
 
@@ -72,41 +81,43 @@ cp.cpr_bs <- function(x, theta, ...) {
 
 #' @export
 #' @rdname cp
-#' @param formula a formula that is appropriate for regression method being
-#'        used.
+#' @param formula a formula that is appropriate for regression method being used.
 #' @param data a required \code{data.frame}
 #' @param method the regression method such as \code{\link[stats]{lm}},
-#'        \code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, etc.
-#' @param keep_fit (logical, default value is \code{FALSE}).  If \code{TRUE} the
+#' \code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, etc.
+#' @param method.args a list of additional arguments to pass to the regression
+#' method.
+#' @param keep_fit (logical, default value is \code{TRUE}).  If \code{TRUE} the
 #' regression model fit is retained and returned in as the \code{fit} element.
 #' If \code{FALSE} the \code{fit} element with be \code{NA}.
 #' @param check_rank (logical, defaults to \code{TRUE}) if \code{TRUE} check
 #' that the design matrix is full rank.
-cp.formula <- function(formula, data, method = stats::lm, ..., keep_fit = FALSE, check_rank = TRUE) {
+cp.formula <- function(formula, data, method = stats::lm, method.args = list(), keep_fit = TRUE, check_rank = TRUE, ...) {
+
   # check for some formula specification issues
-  if (sum(grepl("bsplines", attr(stats::terms(formula), "term.labels"))) != 1) {
-    stop("cpr::bsplines() must appear once, with no effect modifiers, on the right hand side of the formula.")
+  rhs_check <- grepl("bsplines", attr(stats::terms(formula), "term.labels"))
+  if ( !rhs_check[1] | any(rhs_check[-1]) ) {
+    stop("bsplines() must appear first, once, and with no effect modifiers, on the right hand side of the formula.")
   }
 
   # this function will add f_for_use and data_for_use into this environment
   f_for_use <- data_for_use <- NULL
   generate_cp_formula_data(formula, data)
 
-  regression <- match.fun(method)
-  cl <- as.list(match.call())
-  cl <- cl[-c(1, which(names(cl) %in% c("method", "keep_fit", "check_rank")))]
-  cl$formula <- as.name("f_for_use")
-  cl$data <- as.name("data_for_use")
+  cl <- list(formula = as.name("f_for_use"),
+             data = as.name("data_for_use"))
+  cl <- c(cl, method.args)
 
+  regression <- match.fun(method)
   fit <- do.call(regression, cl)
+  Bmat <- stats::model.frame(fit)[[2]]
+  COEF_VCOV <- coef_vcov(fit, theta_idx = seq(1, ncol(Bmat), by = 1))
 
   if (check_rank) {
     m <- stats::model.matrix(lme4::nobars(f_for_use), data_for_use)
-    if (matrix_rank(m) != ncol(m) | any(is.na(BETA(fit)))) {
-      warning("Design Matrix is rank deficient. keep_fit being set to TRUE.",
-              call. = FALSE,
-              immediate. = TRUE)
-    keep_fit <- TRUE
+    if (matrix_rank(m) != ncol(m) | any(is.na(COEF_VCOV$coef))) {
+      keep_fit <- TRUE
+      warning("Design Matrix is rank deficient. keep_fit being set to TRUE.")
     }
   }
 
@@ -114,158 +125,28 @@ cp.formula <- function(formula, data, method = stats::lm, ..., keep_fit = FALSE,
   cl[[1]] <- as.name("cp")
   cl <- as.call(cl)
 
-  Bmat <- stats::model.frame(fit)
-  Bmat <- Bmat[[which(grepl("bsplines", names(Bmat)))]]
+  out <- cp.cpr_bs(Bmat, as.vector(COEF_VCOV$theta))
 
-  out <- cp.cpr_bs(Bmat, as.vector(theta(fit)))
+  # update elements of the cpr_bs object
+  if (keep_fit) {
+    out[["fit"]] <-  fit
+  }
 
-  out$call         <- cl
-  out$keep_fit     <- keep_fit
-  out$fit          <- if (keep_fit) { fit } else {NA}
-  out$coefficients <- BETA(fit)
-  out$vcov         <- SIGMA(fit)
-  out$loglik       <- loglikelihood(fit)
-  out$rmse         <- sqrt(mean(stats::residuals(fit)^2))
+  out[["call"]]         <- cl
+  out[["keep_fit"]]     <- keep_fit
+  out[["theta"]]        <- COEF_VCOV$theta
+  out[["vcov_theta"]]   <- COEF_VCOV$vcov_theta
+  out[["coefficients"]] <- COEF_VCOV$coef
+  out[["vcov"]]         <- COEF_VCOV$vcov
+  out[["loglik"]]       <- loglikelihood(fit)
+  out[["rss"]]          <- sum(stats::residuals(fit)^2)
+  out[["rse"]]          <- sqrt(sum(stats::residuals(fit)^2) / (nrow(data) - length(COEF_VCOV$coef)))
 
   out
 }
 
-#' @method print cpr_cp
 #' @export
-#' @rdname cp
 print.cpr_cp <- function(x, ...) {
   print(x$cp, ...)
+  invisible(x)
 }
-
-#' @export
-#' @param object a \code{cpr_cp} object
-#' @param wiggle logical, if \code{TRUE} then the integral of the squared second
-#' derivative of the spline function will be calculated via
-#' \code{stats::integrate}.
-#' @param integrate.args a list of arguments passed to \code{cpr::wiggle} and
-#' ultimately \code{stats::integrate}.
-#' @rdname cp
-summary.cpr_cp <- function(object, wiggle = FALSE, integrate.args = list(), ...){
-  out <-
-    data.frame(dfs        = length(object$cp$theta),
-         n_iknots   = length(object$iknots),
-         iknots     = I(list(object$iknots)),
-         loglik     = object$loglik,
-         rmse       = object$rmse)
-
-
-  if (wiggle) {
-    wggl <- try(do.call(wiggle.cpr_cp, c(list(object = object), integrate.args)), silent = TRUE)
-
-
-    if (inherits(x = wggl, what = "integrate")) {
-      out$wiggle <- as.numeric(wggl$value)
-      attr(out$wiggle, "abs.error") <- wggl$abs.error
-      attr(out$wiggle, "subdivisions") <- wggl$subdivisions
-      attr(out$wiggle, "message") <- wggl$message
-    } else {
-      out$wiggle <- NA
-      attr(out$wiggle, "error") <- wggl
-    }
-  }
-  out
-}
-
-
-#' @method plot cpr_cp
-#' @export
-#' @rdname cp
-#' @param show_cp logical (default \code{TRUE}), show the control polygon(s)?
-#' @param show_spline logical (default \code{FALSE}) to plot the spline
-#' function?
-#' @param show_xi logical (default \code{TRUE}) use
-#' \code{\link[ggplot2]{geom_rug}} to show the location of the knots in the
-#' respective control polygons.
-#' @param color Boolean (default FALSE) if more than one \code{cpr_cp} object is
-#' to be plotted, set this value to TRUE to have the graphic in color (line types
-#' will be used regardless of the color setting).
-#' @param n the number of data points to use for plotting the spline
-#'
-plot.cpr_cp <- function(x, ..., show_cp = TRUE, show_spline = FALSE, show_xi = TRUE, color = FALSE, n = 100) {
-  nms   <- sapply(match.call()[-1], deparse)
-  nms   <- nms[!(names(nms) %in% c("show_cp", "show_spline", "show_xi", "color", "n"))]
-
-  cps       <- lapply(list(x, ...), getElement, "cp")
-  knot_data <- lapply(list(x, ...), function(x) {data.frame(x = x$xi)})
-  spline_data <-
-    lapply(list(x, ...), function(xx) {
-           b <- xx$bknots
-           bmat <- bsplines(seq(b[1], b[2], length = n),
-                            iknots = xx$iknots,
-                            bknots = b,
-                            order  = xx$order)
-           data.frame(x = seq(b[1], b[2], length = n),
-                      y = as.numeric(bmat %*% xx$cp$theta))
-                          })
-
-  for(i in seq_along(nms)) {
-    cps[[i]]$row <- nms[i]
-    knot_data[[i]]$row <- nms[i]
-    spline_data[[i]]$row <- nms[i]
-  }
-
-  cps <- do.call(rbind, cps)
-  knot_data <- do.call(rbind, knot_data)
-  spline_data <- do.call(rbind, spline_data)
-
-  names(cps) <- c("x", "y", "row")
-  knot_data$y <- NA_real_
-
-  cps$row       <- factor(cps$row, levels = nms)
-  knot_data$row <- factor(knot_data$row, levels = nms)
-  spline_data$row <- factor(spline_data$row, levels = nms)
-
-  cps$object <- 1
-  knot_data$object <- 2
-  spline_data$object <- 3
-  plot_data <- rbind(cps, knot_data, spline_data)
-
-  plot_data$object <- factor(plot_data$object, levels = 1:3, labels = c("cp", "knots", "spline"))
-
-  base_plot <-
-    ggplot2::ggplot(plot_data) +
-    ggplot2::theme_bw() +
-    eval(substitute(ggplot2::aes(x = X, y = Y), list(X = as.name("x"), Y = as.name("y")))) +
-    ggplot2::theme(axis.title = ggplot2::element_blank())
-
-  if (show_xi) {
-    base_plot <-
-      base_plot +
-      ggplot2::geom_rug(data = subset(plot_data, plot_data$object == "knots"))
-  }
-
-  if (show_cp) {
-    base_plot <-
-      base_plot +
-      ggplot2::geom_point(data = subset(plot_data, plot_data$object == "cp")) +
-      ggplot2::geom_line(data = subset(plot_data, plot_data$object == "cp"))
-  }
-
-  if (show_spline) {
-    base_plot <-
-      base_plot +
-      ggplot2::geom_line(data = subset(plot_data, plot_data$object == "spline"))
-  }
-
-  if (length(cps) > 1) {
-    base_plot <-
-      base_plot +
-      eval(substitute(ggplot2::aes(linetype = LTY), list(LTY = as.name("row")))) +
-      ggplot2::theme(legend.title = ggplot2::element_blank())
-  }
-
-  if (color) {
-    base_plot <-
-      base_plot +
-      eval(substitute(ggplot2::aes(color = CLR), list(CLR = as.name("row")))) +
-      ggplot2::theme(legend.title = ggplot2::element_blank())
-  }
-
-  base_plot
-}
-

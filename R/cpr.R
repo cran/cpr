@@ -4,42 +4,44 @@
 #'
 #' \code{cpr} runs the control polygon reduction algorithm.
 #'
-#' \code{keep} will keep the regression fit as part of the \code{cpr\_cp} object
-#' for models with up to and including keep fits.  For example, if \code{keep =
-#' 10} then the resulting \code{cpr\_cpr} object will have the regression fit
-#' stored in the first \code{keep + 1} (zero internal knots, one internal knot,
-#' \ldots, \code{keep} internal knots) \code{cpr\_cp} objects in the list.  The
-#' limit on the number of stored regression fits is to keep memory usage down.
+#' The algorithm is generally speaking fast, but can take a long time to run if
+#' the number of interior knots of initial control polygon is high.  To help
+#' track the progress of the execution you can have \code{progress = "cpr"}
+#' which will show a progress bar incremented for each iteration of the CPR
+#' algorithm.  \code{progress = "influence"} will use a combination of messages
+#' and progress bars to report on each step in assessing the influence of all the
+#' internal knots for each iteration of the CPR algorithm.  See
+#' \code{\link{influence_of_iknots}} for more details.
 #'
 #' @param x a \code{cpr_cp} object
-#' @param keep keep (store) the regression fit for models with \code{keep} or
-#' fewer internal knots, e.g., \code{keep = 3} will result in the regression fit
-#' for models with 0, 1, 2, and 3 internal knots being saved in their respective
-#' \code{cpr_cp} objects.  The default is \code{keep = -1} so that no regression
-#' models are retained.
-#' @param p defaults to 2L, the L^p norm used in determining the influence
-#'        weight of each internal knot.
-#' @param progress show a progress bar.
+#' @param progress controls the level of progress messaging.  See Details.
 #' @param ... not currently used
+#'
+#' @return a list of \code{cpr_cp} objects
+#'
+#' @seealso \code{\link{influence_of_iknots}}
 #'
 #' @examples
 #' #############################################################################
 #' # Example 1: find a model for log10(pdg) = f(day) from the spdg data set
-#' \dontrun{
+#' \donttest{
 #' # need the lme4 package to fit a mixed effect model
 #' require(lme4)
 #'
 #' # construct the initial control polygon.  Forth order spline with fifty
 #' # internal knots.  Remember degrees of freedom equal the polynomial order
 #' # plus number of internal knots.
-#' init_cp <- cp(log10(pdg) ~ bsplines(day, df = 54) + (1|id),
+#' init_cp <- cp(log10(pdg) ~ bsplines(day, df = 24, bknots = c(-1, 1)) + (1|id),
 #'               data = spdg, method = lme4::lmer)
 #' cpr_run <- cpr(init_cp)
 #' plot(cpr_run, color = TRUE)
-#' plot(cpr_run, type = "rmse", to = 10)
 #'
-#' # preferable model is in index 4
-#' preferable_cp <- cpr_run[[4]]
+#' s <- summary(cpr_run)
+#' s
+#' plot(s, type = "rse")
+#'
+#' # preferable model is in index 5 by eye
+#' preferable_cp <- cpr_run[["cps"]][[5]]
 #' }
 #'
 #' #############################################################################
@@ -52,25 +54,38 @@
 #' sim_data <- data.frame(x = x, y = rbinom(2500, 1, p(x)))
 #'
 #' # Define the initial control polygon
-#' init_cp <- cp(formula = y ~ bsplines(x, df = 54, bknots = c(0, 4.5)),
-#'               family  = binomial(),
+#' init_cp <- cp(formula = y ~ bsplines(x, df = 24, bknots = c(0, 4.5)),
+#'               data    = sim_data,
 #'               method  = glm,
-#'               data    = sim_data)
+#'               method.args = list(family  = binomial())
+#'               )
 #'
-#' # run CPR, preferable model is in index 7
+#' # run CPR
 #' cpr_run <- cpr(init_cp)
-#' plot(cpr_run, color = TRUE, type = "rmse", to = 15)
-#' plot(cpr_run, color = TRUE, from = 11, to = 15, show_spline = TRUE)
+#'
+#' # preferable model is in index 6
+#' s <- summary(cpr_run)
+#' plot(s, color = TRUE, type = "rse")
+#'
+#' plot(
+#'     cpr_run
+#'   , color = TRUE
+#'   , from = 5
+#'   , to = 7
+#'   , show_spline = TRUE
+#'   , show_cp = FALSE
+#'   )
+#'
 #'
 #' # plot the fitted spline and the true p(x)
-#' sim_data$pred_select_p <-
-#'   plogis(predict(cpr_run[[7]], newdata = sim_data)$pred)
-#'
+#' sim_data$pred_select_p <- plogis(predict(cpr_run[[7]], newdata = sim_data))
 #' ggplot2::ggplot(sim_data) +
 #' ggplot2::theme_bw() +
 #' ggplot2::aes(x = x) +
 #' ggplot2::geom_point(mapping = ggplot2::aes(y = y), alpha = 0.1) +
-#' ggplot2::geom_line(mapping = ggplot2::aes(y = pred_select_p, color = "pred_select_p")) +
+#' ggplot2::geom_line(
+#'     mapping = ggplot2::aes(y = pred_select_p, color = "pred_select_p")
+#'   ) +
 #' ggplot2::stat_function(fun = p, mapping = ggplot2::aes(color = 'p(x)'))
 #'
 #' # compare to gam and a binned average
@@ -85,7 +100,9 @@
 #' ggplot2::theme_bw() +
 #' ggplot2::aes(x = x) +
 #' ggplot2::stat_function(fun = p, mapping = ggplot2::aes(color = 'p(x)')) +
-#' ggplot2::geom_line(mapping = ggplot2::aes(y = pred_select_p, color = "pred_select_p")) +
+#' ggplot2::geom_line(
+#'     mapping = ggplot2::aes(y = pred_select_p, color = "pred_select_p")
+#'   ) +
 #' ggplot2::stat_smooth(mapping = ggplot2::aes(y = y, color = "gam"),
 #'                      method = "gam",
 #'                      formula = y ~ s(x, bs = "cs"),
@@ -96,69 +113,64 @@
 #'
 #'
 #' @export
-cpr <- function(x, keep = -1, p = 2, progress = interactive(), ...) {
+cpr <- function(x, progress = c('cpr', 'influence', 'none'), ...) {
   UseMethod("cpr")
 }
 
 #' @export
-cpr.cpr_cp <- function(x, keep = -1, p = 2, progress = interactive(), ...) {
+cpr.cpr_cp <- function(x, progress = c('cpr', 'influence', 'none'), ...) {
 
-  out <- vector("list", length = length(x$iknots) + 1L)
+  progress <- match.arg(progress, several.ok = FALSE)
 
-  if ((length(out) > (keep + 1)) && (x$keep_fit)) {
-    x <- eval(stats::update(x, keep_fit = FALSE, check_rank = FALSE, evaluate = FALSE), parent.frame())
-  } else if (length(out) <= (keep + 1) & !x$keep_fit) {
-    x <- eval(stats::update(x, keep_fit = TRUE, check_rank = FALSE, evaluate = FALSE), parent.frame())
+  ioik_out <- cp_out <- vector("list", length = length(x$iknots) + 1L)
+
+  if (progress == 'cpr') {
+    pb <- utils::txtProgressBar(max = length(cp_out), style = 3) # nocov
+    prg <- 0 # noocv
+    utils::setTxtProgressBar(pb, prg) # noocv
   }
 
-  if (progress) {
-    pb <- utils::txtProgressBar(max = length(out), style = 3)
-    prg <- 0
-    utils::setTxtProgressBar(pb, prg)
-  }
+  for(i in rev(seq_along(cp_out)[-1])) {
+    cp_out[[i]] <- x
+    w <- summary(influence_of_iknots(cp_out[[i]], verbose = (progress == 'influence'), ...))
+    nkts <- w$iknot[ w$influence_rank > 1 ]
+    ioik_out[[i]] <- w
 
-  for(i in rev(seq_along(out)[-1])) {
-    out[[i]] <- x
-    w    <- influence_weights(x, p = p)
-    nkts <- w$iknots[rank(w$w, ties.method = "first") > 1]
+    x <-
+      eval(
+        stats::update(
+             x
+           , formula = newknots(x$call$formula, nkts)
+           , keep_fit = TRUE
+           , check_rank = FALSE
+           , evaluate = FALSE)
+        , parent.frame()
+      )
 
-    if (i == keep + 1) {
-      x <- stats::update(x, keep_fit = TRUE)
+    if (progress == 'cpr') {
+      utils::setTxtProgressBar(pb, prg <- prg + 1) # nocov
     }
 
-    x <- eval(stats::update(x, formula = newknots(x$call$formula, nkts), check_rank = FALSE, evaluate = FALSE), parent.frame())
-
-    if (progress) {
-      utils::setTxtProgressBar(pb, prg <- prg + 1)
-    }
   }
 
-  out[[1]] <- x
+  cp_out[[1]]   <- x
+  ioik_out[[1]] <- summary(influence_of_iknots(x))
 
-  if (progress) {
-    utils::setTxtProgressBar(pb, prg <- prg + 1)
-    close(pb)
+  if (progress == 'cpr') {
+    utils::setTxtProgressBar(pb, prg <- prg + 1) # nocov
+    close(pb) # nocov
   }
 
-  class(out) <- c("cpr_cpr", class(out))
-  out
+  attr(cp_out, "ioik") <- ioik_out
+
+  class(cp_out) <- c("cpr_cpr", class(cp_out))
+  cp_out
 }
 
 #' @method print cpr_cpr
 #' @export
 print.cpr_cpr <- function(x, ...) {
   cat("A list of control polygons\n")
-  utils::str(x, max.level = 0)
+  cat(utils::str(x, max.level = 0))
+  invisible(x)
 }
-
-#' @export
-#' @param object a \code{cpr_cpr} object
-#' @rdname cpr
-summary.cpr_cpr <- function(object, ...) {
-  rtn <- lapply(object, summary)
-  for (i in seq_along(object)) {
-    rtn[[i]]$index <- as.integer(i)
-  }
-  do.call(rbind, rtn)
-}
-

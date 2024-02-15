@@ -23,23 +23,29 @@ An implementation of Carl de Boor's recursive algorithm for building
 B-splines.
 }
 \details{
-The difference between this function and \code{splines::bs} come in the
-attributes associated with the output and default options.  The
-\code{cpr::bsplines} call is intended to simplify the work needed with
-respect to the control polygon reduction.  Further, the implementation of
-\code{cpr::bsplines} is in C++ and tends to be faster than
-\code{splines::bs}.
+There are several differences between this function and
+\code{\link[splines]{bs}}.
 
-See the \code{vignette("bsplines", package = "cpr")} for a detailed
-comparison between the \code{bsplines} and \code{\link[splines]{bs}} calls
-and notes about B-splines in general.
+The most important difference is how the two methods treat the right-hand end
+of the support.  \code{\link[splines]{bs}} uses a pivot method to allow for
+extrapolation and thus returns a basis matrix where non-zero values exist on
+the \code{max(Boundary.knots)} (\code{\link[splines]{bs}} version of
+\code{bsplines}'s \code{bknots}).  \code{bsplines} use a strict definition of
+the splines where the support is open on the right hand side, that is,
+\code{bsplines} return right-continuous functions.
+
+Additionally, the attributes of the object returned by \code{bsplines} are
+different from the attributes of the object returned by
+\code{\link[splines]{bs}}. See the \code{vignette(topic = "cpr", package =
+"cpr")} for a detailed comparison between the \code{bsplines} and
+\code{\link[splines]{bs}} calls and notes about B-splines in general.
 }
 \examples{
 # build a vector of values to transform
-xvec <- seq(-3, 5, length = 100)
+xvec <- seq(-3, 4.9999, length = 100)
 
 # cubic b-spline
-bmat <- bsplines(xvec, iknots = c(-2, 0, 1.2, 1.2, 3.0))
+bmat <- bsplines(xvec, iknots = c(-2, 0, 1.2, 1.2, 3.0), bknots = c(-3, 5))
 bmat
 
 # plot the splines
@@ -51,8 +57,12 @@ plot(bmat, color = FALSE) + ggplot2::aes(linetype = spline) # add a linetype
 # The x-axis, by default, show the knot locations.  Other options are numeric
 # values, and/or to use a second x-axis
 
-plot(bmat, show_xi = TRUE,  show_x = FALSE) # default, knot, symbols, on lower axis
-plot(bmat, show_xi = FALSE, show_x = TRUE)  # Numeric value for the knot locations
+plot(bmat, show_xi = TRUE,  show_x = FALSE) # default, knot, symbols, on lower
+                                            # axis
+
+plot(bmat, show_xi = FALSE, show_x = TRUE)  # Numeric value for the knot
+                                            # locations
+
 plot(bmat, show_xi = TRUE,  show_x = TRUE)  # symbols on bottom, numbers on top
 
 # quadratic splines
@@ -64,7 +74,8 @@ plot(bmat) + ggplot2::ggtitle("Quadratic B-splines")
 \references{
 C. de Boor, "A practical guide to splines. Revised Edition," Springer, 2001.
 
-H. Prautzsch, W. Boehm, M. Paluszny, "Bezier and B-spline Techniques," Springer, 2002.
+H. Prautzsch, W. Boehm, M. Paluszny, "Bezier and B-spline Techniques,"
+Springer, 2002.
 }
 \seealso{
 \code{\link{plot.cpr_bs}} for plotting the basis,
@@ -74,4 +85,7 @@ second derivative of a B-spline.
 See \code{\link{update_bsplines}} for info on a tool for updating a
 \code{cpr_bs} object.  This is a similar method to the
 \code{\link[stats]{update}} function from the \code{stats} package.
+
+\code{vignette(topic = "cpr", package = "cpr")} for details on B-splines and
+the control polygon reduction method.
 }

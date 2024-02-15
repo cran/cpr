@@ -46,7 +46,7 @@ generate the graphics.  If \code{FALSE}, use \code{plot3D::persp3D} to
 generate the graphics.}
 }
 \value{
-The result of the \code{get_surface} call is returned invisibly.
+the plotting data needed to generate the plot is returned invisibly.
 }
 \description{
 Three-dimensional plots of control nets and/or surfaces
@@ -61,7 +61,7 @@ for OpenGL.
 
 Building complex and customized graphics might be easier for you if you use
 \code{\link{get_surface}} to generate the needed data for plotting.  See
-\code{vignette("cpr-pkg", package = "cpr")} for examples of building
+\code{vignette(topic = "cnr", package = "cpr")} for examples of building
 different plots.
 
 For \code{rgl} graphics, the \code{surface_args} and \code{net_args} are
@@ -75,7 +75,20 @@ For \code{plot3D} graphics there are no defaults values for the
 \code{net_args} and \code{surface_args}.
 }
 \examples{
-## see vignette("cpr-pkg", package = "cpr")
+\donttest{
+ acn <- cn(log10(pdg) ~ btensor(  x = list(day, age)
+                                , df = list(30, 4)
+                                , bknots = list(c(-1, 1), c(44, 53)))
+           , data = spdg)
+
+# plot3D
+plot(acn, rgl = FALSE)
+
+# rgl
+if (require(rgl)) {
+  plot(acn, rgl = TRUE)
+}
+}
 
 }
 \seealso{
@@ -84,4 +97,6 @@ For \code{plot3D} graphics there are no defaults values for the
 and controlling rgl graphics. \code{\link[plot3D]{persp3D}} for building
 plot3D graphics. \code{\link{get_surface}} for generating the data sets
 needed for the plotting methods.
+
+\code{vignette(topic = "cnr", package = "cpr")}
 }

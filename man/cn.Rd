@@ -4,44 +4,47 @@
 \alias{cn}
 \alias{cn.cpr_bt}
 \alias{cn.formula}
-\alias{print.cpr_cn}
-\alias{summary.cpr_cn}
 \title{Control Nets}
 \usage{
 cn(x, ...)
 
 \method{cn}{cpr_bt}(x, theta, ...)
 
-\method{cn}{formula}(formula, data, method = stats::lm, ..., keep_fit = FALSE, check_rank = TRUE)
-
-\method{print}{cpr_cn}(x, ...)
-
-\method{summary}{cpr_cn}(object, ...)
+\method{cn}{formula}(
+  formula,
+  data,
+  method = stats::lm,
+  method.args = list(),
+  keep_fit = TRUE,
+  check_rank = TRUE,
+  ...
+)
 }
 \arguments{
-\item{x}{a \code{cpr_bs} object}
+\item{x}{a \code{cpr_bt} object}
 
-\item{...}{arguments passed to the regression method}
+\item{...}{pass through}
 
 \item{theta}{a vector of (regression) coefficients, the ordinates of the
 control net.}
 
-\item{formula}{a formula that is appropriate for regression method being
-used.}
+\item{formula}{a formula that is appropriate for regression method being used.}
 
 \item{data}{a required \code{data.frame}}
 
 \item{method}{the regression method such as \code{\link[stats]{lm}},
 \code{\link[stats]{glm}}, \code{\link[lme4]{lmer}}, etc.}
 
+\item{method.args}{a list of additional arguments to pass to the regression
+method.}
+
 \item{keep_fit}{(logical, defaults to \code{FALSE}).  If \code{TRUE} the
 regression model fit is retained and returned in the the \code{fit} element.
-If \code{FALSE} the regression model is not saved and the \code{fit} element will be \code{NA}.}
+If \code{FALSE} the regression model is not saved and the \code{fit} element
+will be \code{NA}.}
 
 \item{check_rank}{(logical, defaults to \code{TRUE}) if TRUE check that the
 design matrix is full rank.}
-
-\item{object}{a \code{cpr_cn} object}
 }
 \value{
 a \code{cpr_cn} object.  This is a list with the following elements.
@@ -58,7 +61,7 @@ Some of the elements are omitted when the using the \code{cn.cpr_bt} method.
  mixed effects model was used.}
  \item{vcov}{The variance-covariance matrix for the \code{coefficients}}
  \item{loglik}{The log-likelihood for the regression model}
- \item{rmse}{The root mean squared error for the regression models}
+ \item{rse}{the residual standard error for the regression models}
  }
 }
 \description{
@@ -67,4 +70,19 @@ Generate the control net for a uni-variable B-spline
 \details{
 \code{cn} generates the control net for the given B-spline function.  There
 are several methods for building a control net.
+}
+\examples{
+
+acn <- cn(log10(pdg) ~
+              btensor(   x     = list(day, age)
+                      , df     = list(30, 4)
+                      , bknots = list(c(-1, 1), c(44, 53))
+              )
+           , data = spdg)
+str(acn, max.level = 1)
+
+}
+\seealso{
+\code{\link{summary.cpr_cn}}, \code{\link{cnr}},
+\code{\link{plot.cpr_cn}} for plotting control nets
 }
